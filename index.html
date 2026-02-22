@@ -334,6 +334,9 @@ function CowanApp() {
   var _xInput = useState("");
   var xInput = _xInput[0];
   var setXInput = _xInput[1];
+  var _showExportMenu = useState(false);
+  var showExportMenu = _showExportMenu[0];
+  var setShowExportMenu = _showExportMenu[1];
   var _socialComingSoon = useState("");
   var socialComingSoon = _socialComingSoon[0];
   var setSocialComingSoon = _socialComingSoon[1];
@@ -428,6 +431,17 @@ function CowanApp() {
       clearTimeout(t);
     };
   }, [isTyping, typingIndex]);
+  useEffect(function () {
+    if (!showExportMenu) return;
+    var handleClickOutside = function () { setShowExportMenu(false); };
+    var t = setTimeout(function () {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+    return function () {
+      clearTimeout(t);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [showExportMenu]);
   useEffect(function () {
     if (showModelHint) {
       var t = setTimeout(function () {
@@ -641,6 +655,69 @@ function CowanApp() {
     setSourcePanelOpen(false);
     setExpandedChunks({});
   };
+
+  /* --- Export-Funktionen --- */
+  var exportableMessages = messages.filter(function (m) { return !m.isWelcome; });
+  var triggerDownload = function (content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+  var exportAsJson = function () {
+    var data = {
+      app: "Cowan - Die Buch-Instanz",
+      exportedAt: new Date().toISOString(),
+      model: PRICING[selectedModel].label,
+      tokens: { input: totalTokens.input, output: totalTokens.output, total: totalTokens.input + totalTokens.output },
+      cost: "$" + totalCost.toFixed(4) + " USD",
+      messages: exportableMessages.map(function (m) {
+        return {
+          role: m.role,
+          content: m.content,
+          sources: (m.sourceIds || []).map(function (id) {
+            var c = KNOWLEDGE_BASE.find(function (ch) { return ch.id === id; });
+            return c ? { id: id, title: c.title } : { id: id };
+          })
+        };
+      })
+    };
+    var ts = new Date().toISOString().slice(0, 10);
+    triggerDownload(JSON.stringify(data, null, 2), "cowan-chat-" + ts + ".json", "application/json");
+  };
+  var exportAsText = function () {
+    var lines = [];
+    lines.push("=== Cowan - Die Buch-Instanz ===");
+    lines.push("Exportiert: " + new Date().toLocaleString("de-DE"));
+    lines.push("Modell: " + PRICING[selectedModel].label);
+    lines.push("Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE"));
+    lines.push("Kosten: $" + totalCost.toFixed(4) + " USD");
+    lines.push("");
+    lines.push("--- Konversation ---");
+    lines.push("");
+    exportableMessages.forEach(function (m) {
+      var label = m.role === "user" ? "Du" : "Cowan";
+      lines.push("[" + label + "]");
+      lines.push(m.content);
+      if (m.sourceIds && m.sourceIds.length > 0) {
+        var names = m.sourceIds.map(function (id) {
+          var c = KNOWLEDGE_BASE.find(function (ch) { return ch.id === id; });
+          return c ? c.title : id;
+        });
+        lines.push("Quellen: " + names.join(", "));
+      }
+      lines.push("");
+    });
+    var ts = new Date().toISOString().slice(0, 10);
+    triggerDownload(lines.join("\n"), "cowan-chat-" + ts + ".txt", "text/plain");
+  };
+
   var exampleQuestions = ["Was ist die SOUL.md?", "Wie starte ich OpenClaw?", "Welche Sub-Agenten gibt es?", "Wie funktioniert ein Masterprompt?"];
   var handleExampleClick = function (question) {
     setInput(question);
@@ -767,7 +844,69 @@ function CowanApp() {
       gap: "8px",
       alignItems: "center"
     }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { position: "relative" }
   }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () { setShowExportMenu(!showExportMenu); },
+    disabled: exportableMessages.length === 0,
+    title: "Konversation exportieren",
+    style: {
+      padding: "6px 12px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      color: exportableMessages.length > 0 ? theme.primary : theme.mutedText,
+      cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+      fontSize: "12px",
+      fontWeight: 600,
+      opacity: exportableMessages.length > 0 ? 1 : 0.5
+    }
+  }, "\u2B07 Export"), showExportMenu && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: "100%",
+      right: 0,
+      marginTop: "4px",
+      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+      border: "1px solid " + theme.border,
+      borderRadius: "8px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      zIndex: 100,
+      overflow: "hidden",
+      minWidth: "160px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: exportAsJson,
+    onMouseEnter: function (e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; },
+    onMouseLeave: function (e) { e.target.style.backgroundColor = "transparent"; },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "10px 14px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "13px",
+      cursor: "pointer",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border
+    }
+  }, "\uD83D\uDCC4 Als JSON speichern"), /*#__PURE__*/React.createElement("button", {
+    onClick: exportAsText,
+    onMouseEnter: function (e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; },
+    onMouseLeave: function (e) { e.target.style.backgroundColor = "transparent"; },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "10px 14px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "13px",
+      cursor: "pointer",
+      textAlign: "left"
+    }
+  }, "\uD83D\uDCDD Als Text speichern"))), /*#__PURE__*/React.createElement("button", {
     onClick: resetConversation,
     style: {
       padding: "6px 12px",
