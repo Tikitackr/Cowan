@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cowan – Die Buch-Instanz | Agentic Authorship</title>
+  <meta name="description" content="KI-Wissensassistent fuer das Buch Agentic Authorship - Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>" />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    #root { height: 100%; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    #loading {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #0f172a; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 99999;
+      transition: opacity 0.5s ease;
+    }
+    #loading.fade-out { opacity: 0; pointer-events: none; }
+    #loading .emoji { font-size: 64px; animation: pulse 1.5s ease-in-out infinite; }
+    #loading .text { color: #94a3b8; font-size: 14px; margin-top: 16px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="emoji">🦞</div>
+    <div class="text">Cowan wird geladen...</div>
+  </div>
+  <div id="root"></div>
+  <script>
+/* React Hooks aus globalem React-Objekt */
+const {
+  useState,
+  useRef,
+  useEffect,
+  useCallback
+} = React;
+
+/* ==========================================================
+   Cowan – Die Buch-Instanz
+   KI-Wissensassistent fuer "Agentic Authorship"
+   Phase 1 – Standalone React / GitHub Pages
+   ========================================================== */
+
+const PRICING = {
+  "claude-haiku-4-5-20251001": {
+    input: 1.0 / 1000000,
+    output: 5.0 / 1000000,
+    label: "Haiku 4.5"
+  },
+  "claude-sonnet-4-5-20250929": {
+    input: 3.0 / 1000000,
+    output: 15.0 / 1000000,
+    label: "Sonnet 4.5"
+  }
+};
+
+/* --- Wissensbasis: 8 Platzhalter-Chunks --- */
+const KNOWLEDGE_BASE = [{
+  id: "chunk-openclaw-setup",
+  title: "OpenClaw Setup & Installation",
+  category: "setup",
+  difficulty: "beginner",
+  summary: "Anleitung zur Installation und Ersteinrichtung von OpenClaw inkl. API-Key-Konfiguration.",
+  dependencies: [],
+  tags: ["installation", "api-key", "ersteinrichtung", "openclaw"],
+  content: "OpenClaw ist ein Open-Source-Agent-Framework, das speziell fuer die KI-gestuetzte Bucherstellung entwickelt wurde. Es ermoeglicht dir, einen Hauptagenten (definiert durch SOUL.md) und mehrere Sub-Agenten (definiert durch AGENTS.md) zu orchestrieren.\n\n**Installation:**\n\n1. Repository klonen: Lade das OpenClaw-Repository von GitHub herunter.\n2. Abhaengigkeiten installieren: Fuehre npm install im Projektverzeichnis aus.\n3. API-Key konfigurieren: Erstelle eine .env-Datei im Stammverzeichnis und trage deinen Claude API-Key ein.\n4. Erststart: Fuehre npm run dev aus, um das Dashboard zu starten.\n\n**Erste Schritte nach der Installation:**\n\nNach der Installation solltest du zunaechst die SOUL.md-Datei anpassen. Sie definiert die Persoenlichkeit und das Verhalten deines Hauptagenten. Danach kannst du in AGENTS.md die Sub-Agenten-Rollen konfigurieren.\n\n**Tipp:** Starte mit der Standardkonfiguration und passe sie schrittweise an dein Buchprojekt an.",
+  source: "Kapitel 3 - Erste Schritte mit OpenClaw",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-soul-md",
+  title: "SOUL.md verstehen",
+  category: "architecture",
+  difficulty: "beginner",
+  summary: "SOUL.md definiert die Persoenlichkeit und das Verhalten des Hauptagenten in OpenClaw.",
+  dependencies: ["chunk-openclaw-setup"],
+  tags: ["soul", "agent", "persoenlichkeit", "konfiguration", "hauptagent"],
+  content: "Die SOUL.md ist das Herzstueck deines OpenClaw-Projekts. Sie definiert, wer dein Hauptagent ist, wie er denkt und wie er schreibt.\n\n**Aufbau der SOUL.md:**\n\nDie Datei besteht aus mehreren Abschnitten:\n\n- **Identitaet:** Name, Rolle und Kernaufgabe des Agenten\n- **Schreibstil:** Tonalitaet, Zielgruppe, sprachliche Praeferenzen\n- **Wissensdomaene:** Themengebiete, in denen der Agent kompetent ist\n- **Verhaltensregeln:** Was der Agent tun und lassen soll\n- **Ausgabeformat:** Wie Ergebnisse strukturiert werden sollen\n\n**Best Practices:**\n\n1. Halte die SOUL.md unter 500 Woerter - knapp und praezise\n2. Definiere klare Grenzen: Was soll der Agent NICHT tun?\n3. Verwende konkrete Beispiele fuer den gewuenschten Schreibstil\n4. Aktualisiere die SOUL.md iterativ basierend auf den Ergebnissen",
+  source: "Kapitel 4 - Die Seele deines Agenten",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-agents-md",
+  title: "Sub-Agenten mit AGENTS.md",
+  category: "agents",
+  difficulty: "intermediate",
+  summary: "AGENTS.md definiert die 8 Sub-Agenten-Rollen, die den Hauptagenten bei der Bucherstellung unterstuetzen.",
+  dependencies: ["chunk-soul-md"],
+  tags: ["agenten", "rollen", "agents-md", "sub-agenten", "workflow"],
+  content: "In OpenClaw arbeiten bis zu 8 spezialisierte Sub-Agenten zusammen, jeder mit einer klar definierten Rolle. Die Konfiguration erfolgt in der AGENTS.md-Datei.\n\n**Die 8 Sub-Agenten-Rollen:**\n\n1. **content-architect** - Plant die Buchstruktur, Kapitelgliederung und den roten Faden\n2. **technical-writer** - Schreibt die Hauptinhalte basierend auf der Struktur\n3. **fact-checker** - Ueberprueft Fakten, Links und technische Aussagen\n4. **german-editor** - Korrigiert Grammatik, Stil und Ausdruck fuer deutsches Publikum\n5. **consistency-checker** - Stellt Konsistenz ueber alle Kapitel hinweg sicher\n6. **meta-documenter** - Dokumentiert den Erstellungsprozess und Entscheidungen\n7. **tutorial-writer** - Erstellt Schritt-fuer-Schritt-Anleitungen und Praxisbeispiele\n8. **workflow-coordinator** - Koordiniert die Zusammenarbeit aller Agenten\n\n**Tipp:** Nicht alle Rollen muessen aktiv sein. Fuer kuerzere Projekte reichen oft content-architect, technical-writer und german-editor.",
+  source: "Kapitel 5 - Dein Agenten-Team",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-masterprompt",
+  title: "Masterprompt-Technik",
+  category: "prompting",
+  difficulty: "intermediate",
+  summary: "Strukturierte Prompts (Masterprompts) sind der Schluessel zur konsistenten KI-gestuetzten Bucherstellung.",
+  dependencies: ["chunk-soul-md", "chunk-agents-md"],
+  tags: ["prompt", "masterprompt", "technik", "struktur", "prompt-engineering"],
+  content: "Ein Masterprompt ist ein detaillierter, strukturierter Prompt, der alle Informationen enthaelt, die ein KI-Modell braucht, um ein ganzes Buchkapitel konsistent zu erstellen.\n\n**Aufbau eines Masterprompts:**\n\n- **Kontextblock:** Worum geht es im Buch? Welches Kapitel wird geschrieben?\n- **Stilanweisungen:** Tonalitaet, Zielgruppe, Sprachniveau\n- **Strukturvorgabe:** Gliederung mit Ueberschriften und ungefaehren Wortanzahlen\n- **Inhaltliche Leitplanken:** Welche Punkte muessen abgedeckt werden?\n- **Beispiele:** 1-2 Absaetze im gewuenschten Stil als Referenz\n- **Ausgabeformat:** Markdown-Struktur, Sonderformatierungen\n\n**Vorteile gegenueber einfachen Prompts:**\n\nEinfache Prompts wie 'Schreibe ein Kapitel ueber X' liefern inkonsistente Ergebnisse. Ein Masterprompt hingegen sorgt dafuer, dass jedes Kapitel im gleichen Stil, mit der gleichen Tiefe und in der gleichen Struktur geschrieben wird.\n\n**Praxis-Tipp:** Erstelle einen Masterprompt-Template und passe ihn fuer jedes Kapitel an.",
+  source: "Kapitel 6 - Prompt-Engineering fuer Buecher",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-dashboard-modules",
+  title: "Dashboard Module M1-M6",
+  category: "dashboard",
+  difficulty: "beginner",
+  summary: "Das OpenClaw-Dashboard besteht aus 6 Modulen (M1-M6), die den gesamten Buchproduktionsprozess abbilden.",
+  dependencies: [],
+  tags: ["dashboard", "module", "uebersicht", "M1", "M2", "M3", "M4", "M5", "M6"],
+  content: "Das OpenClaw-Dashboard ist die zentrale Steuerungseinheit fuer dein Buchprojekt. Es besteht aus 6 Modulen:\n\n**M1 - Projektuebersicht:** Zeigt den aktuellen Status deines Buchprojekts: Fortschritt pro Kapitel, offene Aufgaben und Zeitplan.\n\n**M2 - Agenten-Steuerung:** Hier konfigurierst und startest du deine Agenten (SOUL.md und AGENTS.md). Du kannst einzelne Sub-Agenten aktivieren oder deaktivieren.\n\n**M3 - Content-Pipeline:** Verwaltet den Schreibprozess: Von der Gliederung ueber den Erstentwurf bis zum fertigen Kapitel.\n\n**M4 - Qualitaetssicherung:** Fact-Checking, Konsistenzpruefung und Lektorat.\n\n**M5 - Publishing:** Export und Veroeffentlichung: Formatierung fuer Amazon KDP, EPUB-Generierung und Metadaten-Verwaltung.\n\n**M6 - Dein Projekt (Cowan):** Der KI-Wissensassistent Cowan ist hier eingebettet. Stelle Fragen zum Buchprozess.\n\n**Tipp:** Starte mit M1 und M2, bevor du die anderen Module nutzt.",
+  source: "Kapitel 2 - Das Dashboard im Ueberblick",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-n8n-batch",
+  title: "Batch-Produktion mit n8n",
+  category: "workflows",
+  difficulty: "advanced",
+  summary: "Mit n8n-Workflows auf einem VPS laesst sich die Buchproduktion automatisieren und im Batch-Modus betreiben.",
+  dependencies: ["chunk-agents-md", "chunk-masterprompt"],
+  tags: ["n8n", "workflow", "batch", "automation", "vps", "trigger"],
+  content: "n8n ist ein Workflow-Automatisierungstool, das du auf deinem eigenen VPS (Virtual Private Server) betreibst. Fuer die Buchproduktion ermoeglicht es dir, mehrere Kapitel automatisiert nacheinander zu erstellen.\n\n**Typischer Batch-Workflow:**\n\n1. Trigger: Manuell oder zeitgesteuert (z.B. taeglich um 3 Uhr)\n2. Kapitel-Liste laden: Aus einer JSON- oder CSV-Datei\n3. Loop ueber Kapitel: Fuer jedes Kapitel den Masterprompt zusammenbauen\n4. Claude API-Call: Kapitel generieren lassen\n5. Qualitaetspruefung: Automatische Checks (Wortanzahl, Formatierung)\n6. Speichern: Ergebnis als Markdown-Datei ablegen\n7. Benachrichtigung: E-Mail oder Slack-Nachricht wenn fertig\n\n**Rate Limits beachten:** Bei Batch-Produktion ist das Rate Limit der Anthropic API wichtig. Baue Pausen zwischen den Calls ein (mindestens 2 Sekunden) und implementiere exponentielles Backoff bei 429-Fehlern.\n\n**Tipp:** Teste den Workflow zuerst mit 2-3 Kapiteln, bevor du alle auf einmal generierst.",
+  source: "Kapitel 8 - Automatisierung mit n8n",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-kdp-publishing",
+  title: "KDP-Publishing Workflow",
+  category: "publishing",
+  difficulty: "intermediate",
+  summary: "Der Weg vom fertigen Manuskript zur Veroeffentlichung auf Amazon KDP.",
+  dependencies: ["chunk-dashboard-modules"],
+  tags: ["kdp", "amazon", "publishing", "veroeffentlichung", "epub", "formatierung"],
+  content: "Amazon KDP (Kindle Direct Publishing) ist die Plattform, auf der du dein Buch veroeffentlichst.\n\n**Vom Manuskript zu KDP:**\n\n1. Export aus M5: Das Dashboard exportiert dein Manuskript als formatiertes Dokument\n2. Formatierung pruefen: Ueberschriften, Absaetze, Code-Bloecke und Bilder kontrollieren\n3. Cover erstellen: KDP benoetigt ein Cover im PNG-Format (2560x1600 px fuer E-Book)\n4. KDP-Account einrichten: Unter kdp.amazon.com registrieren\n5. Buch anlegen: Titel, Beschreibung, Kategorien und Keywords eingeben\n6. Manuskript hochladen: EPUB- oder DOCX-Format\n7. Vorschau pruefen: KDPs Previewer zeigt, wie das Buch auf Kindle aussieht\n8. Preis festlegen und veroeffentlichen\n\n**Haeufige Fallstricke:**\n\n- Encoding-Probleme: Umlaute muessen korrekt kodiert sein\n- Code-Bloecke: In E-Books schwer darstellbar - nutze kurze Beispiele\n- Bilder: Maximal 5 MB pro Bild\n\n**Tipp:** Erstelle zuerst das E-Book (guenstiger zum Testen), dann das Taschenbuch.",
+  source: "Kapitel 10 - Veroeffentlichung auf Amazon KDP",
+  lastUpdated: "2026-02-01"
+}, {
+  id: "chunk-troubleshooting",
+  title: "Haeufige Fehler und Loesungen",
+  category: "troubleshooting",
+  difficulty: "beginner",
+  summary: "Die haeufigsten Probleme bei der Arbeit mit OpenClaw, Claude und n8n - und wie du sie loest.",
+  dependencies: [],
+  tags: ["fehler", "probleme", "loesungen", "hilfe", "troubleshooting", "debug"],
+  content: "Hier findest du die haeufigsten Probleme und ihre Loesungen.\n\n**1. API-Key funktioniert nicht**\nSymptom: Fehlermeldung 401 Unauthorized.\nLoesung: Pruefe ob der Key von console.anthropic.com stammt (nicht claude.ai). Stelle sicher, dass Billing eingerichtet und Guthaben vorhanden ist.\n\n**2. CORS-Fehler im Browser**\nSymptom: Access to fetch has been blocked by CORS policy.\nLoesung: Der Header anthropic-dangerous-direct-browser-access: true muss bei jedem API-Call gesetzt sein.\n\n**3. Rate Limit erreicht (429)**\nSymptom: Too many requests.\nLoesung: Warte 1-2 Minuten. Bei Batch-Produktion: Pausen zwischen Calls einbauen.\n\n**4. Agenten liefern inkonsistente Ergebnisse**\nLoesung: SOUL.md und Masterprompt ueberpruefen. Mehr Stilbeispiele hinzufuegen.\n\n**5. n8n-Workflow bricht ab**\nLoesung: Error-Handling im Workflow pruefen. Retry-Logik hinzufuegen.\n\n**6. Token-Limit ueberschritten**\nLoesung: Kapitel kuerzen oder in Abschnitte aufteilen.",
+  source: "Anhang A - Troubleshooting",
+  lastUpdated: "2026-02-01"
+}];
+
+/* --- System-Prompt Builder --- */
+function buildSystemPrompt(chunks) {
+  var chunkSection = chunks.map(function (chunk) {
+    return "### " + chunk.title + " [" + chunk.id + "]\nKategorie: " + chunk.category + " | Schwierigkeit: " + chunk.difficulty + "\n" + chunk.content;
+  }).join("\n\n");
+  return "Du bist Cowan - Die Buch-Instanz, der KI-Wissensassistent fuer das Buch \"Agentic Authorship: Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik\".\n\n## Deine Aufgabe\nDu hilfst Lesern, Fragen zum Buch, zu OpenClaw, zu n8n-Workflows, zur Claude-API und zur KI-gestuetzten Bucherstellung zu beantworten.\nDu basierst deine Antworten ausschliesslich auf der bereitgestellten Wissensbasis.\n\n## Wissensbasis\n\n" + chunkSection + "\n\n## Antwortregeln\n1. Beantworte Fragen NUR basierend auf den Wissensbausteinen\n2. Zitiere verwendete Quellen am Ende deiner Antwort in exakt diesem Format:\n   ---QUELLEN---\n   chunk-id-hier\n   ---QUELLEN-ENDE---\n3. Wenn die Wissensbasis keine Antwort enthaelt, sage das ehrlich\n4. Antworte immer auf Deutsch\n5. Halte Antworten praxisnah und konkret\n6. Gib IMMER den ---QUELLEN--- Block am Ende an";
+}
+
+/* --- Quellen aus Antwort parsen --- */
+function parseSourcesFromResponse(text) {
+  var match = text.match(/---QUELLEN---\s*([\s\S]*?)\s*---QUELLEN-ENDE---/);
+  if (!match) return {
+    cleanText: text,
+    sourceIds: []
+  };
+  var sourceIds = match[1].trim().split("\n").map(function (id) {
+    return id.trim();
+  }).filter(Boolean);
+  var cleanText = text.replace(/---QUELLEN---[\s\S]*?---QUELLEN-ENDE---/, "").trim();
+  return {
+    cleanText: cleanText,
+    sourceIds: sourceIds
+  };
+}
+
+/* --- Konversation trimmen --- */
+function trimConversationHistory(messages, maxTokenEstimate) {
+  if (!maxTokenEstimate) maxTokenEstimate = 150000;
+  var copy = messages.slice();
+  var estimateTokens = function (msgs) {
+    var sum = 0;
+    for (var i = 0; i < msgs.length; i++) {
+      sum += (msgs[i].content || "").length / 3;
+    }
+    return sum;
+  };
+  while (copy.length > 2 && estimateTokens(copy) > maxTokenEstimate) {
+    copy.splice(0, 1);
+  }
+  return copy;
+}
+
+/* --- Einfaches Markdown-Rendering --- */
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function renderMarkdown(text) {
+  if (!text) return "";
+  var parts = [];
+  var codeBlockRe = /```(\w*)\n?([\s\S]*?)```/g;
+  var lastIdx = 0;
+  var m;
+  while ((m = codeBlockRe.exec(text)) !== null) {
+    if (m.index > lastIdx) {
+      parts.push({
+        type: "text",
+        val: text.slice(lastIdx, m.index)
+      });
+    }
+    parts.push({
+      type: "code",
+      val: m[2]
+    });
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < text.length) {
+    parts.push({
+      type: "text",
+      val: text.slice(lastIdx)
+    });
+  }
+  return parts.map(function (p) {
+    if (p.type === "code") {
+      return "<pre style=\"background:#1e293b;color:#86efac;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;margin:8px 0\"><code>" + escapeHtml(p.val) + "</code></pre>";
+    }
+    return renderInline(p.val);
+  }).join("");
+}
+function renderInline(text) {
+  var h = escapeHtml(text);
+  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0d9488;text-decoration:underline\">$1</a>");
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  h = h.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  h = h.replace(/`([^`]+)`/g, "<code style=\"background:#e2e8f0;color:#be185d;padding:1px 4px;border-radius:3px;font-size:13px\">$1</code>");
+  h = h.replace(/\n/g, "<br/>");
+  return h;
+}
+
+/* --- Hauptkomponente --- */
+function CowanApp() {
+  var initialMsg = {
+    role: "assistant",
+    content: "Hallo! Ich bin **Cowan**, deine Buch-Instanz fuer \"Agentic Authorship\". Stelle mir eine Frage zum Buch, zu OpenClaw, n8n oder Claude - ich helfe dir gerne weiter!",
+    isWelcome: true,
+    sourceIds: []
+  };
+  var _darkMode = useState(true);
+  var darkMode = _darkMode[0];
+  var setDarkMode = _darkMode[1];
+  var _showTutorial = useState(true);
+  var showTutorial = _showTutorial[0];
+  var setShowTutorial = _showTutorial[1];
+  var _tutorialStep = useState(0);
+  var tutorialStep = _tutorialStep[0];
+  var setTutorialStep = _tutorialStep[1];
+  var tutorialSteps = [{
+    icon: "\u{1F99E}",
+    title: "Willkommen bei Cowan!",
+    text: "Ich bin dein KI-Wissensassistent zum Buch \"Agentic Authorship\". Ich kenne das Buch in- und auswendig und helfe dir bei Fragen zu OpenClaw, Claude, n8n und mehr."
+  }, {
+    icon: "\u{1F511}",
+    title: "API-Key eingeben",
+    text: "Um mit mir zu chatten, brauchst du einen Claude API-Key von console.anthropic.com. Trage ihn oben ein und klicke auf \"Pr\u00fcfen\". Keine Sorge, der Key bleibt nur in deinem Browser."
+  }, {
+    icon: "\u{1F4AC}",
+    title: "Frag mich etwas!",
+    text: "Nutze die Beispielfragen oder tippe deine eigene Frage ein. Ich antworte basierend auf der Wissensbasis des Buches und zeige dir die verwendeten Quellen."
+  }, {
+    icon: "\u{1F426}",
+    title: "Kein Key? Frag auf X!",
+    text: "Du kannst deine Frage auch direkt auf X (Twitter) stellen. Klicke auf \"Frag Cowan auf X\" und die Community hilft dir weiter."
+  }];
+  var _apiKey = useState("");
+  var apiKey = _apiKey[0];
+  var setApiKey = _apiKey[1];
+  var apiKeyRef = useRef("");
+  var updateApiKey = function (val) {
+    apiKeyRef.current = val;
+    setApiKey(val);
+    if (!val) {
+      setApiKeyStatus("none");
+    } else if (apiKeyStatus === "valid" || apiKeyStatus === "invalid") {
+      setApiKeyStatus("none");
+    }
+  };
+  var _apiKeyStatus = useState("none");
+  var apiKeyStatus = _apiKeyStatus[0];
+  var setApiKeyStatus = _apiKeyStatus[1];
+  var _selectedModel = useState("claude-haiku-4-5-20251001");
+  var selectedModel = _selectedModel[0];
+  var setSelectedModel = _selectedModel[1];
+  var _showModelHint = useState(false);
+  var showModelHint = _showModelHint[0];
+  var setShowModelHint = _showModelHint[1];
+  var _messages = useState([initialMsg]);
+  var messages = _messages[0];
+  var setMessages = _messages[1];
+  var _input = useState("");
+  var input = _input[0];
+  var setInput = _input[1];
+  var _isLoading = useState(false);
+  var isLoading = _isLoading[0];
+  var setIsLoading = _isLoading[1];
+  var _totalTokens = useState({
+    input: 0,
+    output: 0
+  });
+  var totalTokens = _totalTokens[0];
+  var setTotalTokens = _totalTokens[1];
+  var _totalCost = useState(0);
+  var totalCost = _totalCost[0];
+  var setTotalCost = _totalCost[1];
+  var _lastSources = useState([]);
+  var lastSources = _lastSources[0];
+  var setLastSources = _lastSources[1];
+  var _sourcePanelOpen = useState(false);
+  var sourcePanelOpen = _sourcePanelOpen[0];
+  var setSourcePanelOpen = _sourcePanelOpen[1];
+  var _expandedChunks = useState({});
+  var expandedChunks = _expandedChunks[0];
+  var setExpandedChunks = _expandedChunks[1];
+  var _error = useState("");
+  var error = _error[0];
+  var setError = _error[1];
+  var _xPanelOpen = useState(false);
+  var xPanelOpen = _xPanelOpen[0];
+  var setXPanelOpen = _xPanelOpen[1];
+  var _xInput = useState("");
+  var xInput = _xInput[0];
+  var setXInput = _xInput[1];
+  var _socialComingSoon = useState("");
+  var socialComingSoon = _socialComingSoon[0];
+  var setSocialComingSoon = _socialComingSoon[1];
+  var _lobsterWiggle = useState(false);
+  var lobsterWiggle = _lobsterWiggle[0];
+  var setLobsterWiggle = _lobsterWiggle[1];
+  var _showConfetti = useState(false);
+  var showConfetti = _showConfetti[0];
+  var setShowConfetti = _showConfetti[1];
+  var hasConfettiedRef = useRef(false);
+  var _typingText = useState("");
+  var typingText = _typingText[0];
+  var setTypingText = _typingText[1];
+  var _typingIndex = useState(0);
+  var typingIndex = _typingIndex[0];
+  var setTypingIndex = _typingIndex[1];
+  var _isTyping = useState(false);
+  var isTyping = _isTyping[0];
+  var setIsTyping = _isTyping[1];
+  var typingWordsRef = useRef([]);
+  var typingSourcesRef = useRef([]);
+  var chatEndRef = useRef(null);
+  useEffect(function () {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+  }, [messages, isLoading]);
+  useEffect(function () {
+    if (lobsterWiggle) {
+      var t = setTimeout(function () {
+        setLobsterWiggle(false);
+      }, 1500);
+      return function () {
+        clearTimeout(t);
+      };
+    }
+  }, [lobsterWiggle]);
+  useEffect(function () {
+    if (showConfetti) {
+      var t = setTimeout(function () {
+        setShowConfetti(false);
+      }, 3000);
+      return function () {
+        clearTimeout(t);
+      };
+    }
+  }, [showConfetti]);
+  useEffect(function () {
+    if (!isTyping) return;
+    var words = typingWordsRef.current;
+    if (typingIndex >= words.length) {
+      setIsTyping(false);
+      setMessages(function (prev) {
+        var copy = prev.slice();
+        var last = copy[copy.length - 1];
+        if (last && last.isTyping) {
+          copy[copy.length - 1] = {
+            role: "assistant",
+            content: last.fullContent,
+            sourceIds: typingSourcesRef.current,
+            isTyping: false
+          };
+        }
+        return copy;
+      });
+      return;
+    }
+    var speed = 30;
+    var t = setTimeout(function () {
+      setTypingIndex(function (prev) {
+        return prev + 1;
+      });
+      var shown = words.slice(0, typingIndex + 1).join(" ");
+      setMessages(function (prev) {
+        var copy = prev.slice();
+        var last = copy[copy.length - 1];
+        if (last && last.isTyping) {
+          copy[copy.length - 1] = {
+            role: "assistant",
+            content: shown,
+            fullContent: last.fullContent,
+            sourceIds: [],
+            isTyping: true
+          };
+        }
+        return copy;
+      });
+    }, speed);
+    return function () {
+      clearTimeout(t);
+    };
+  }, [isTyping, typingIndex]);
+  useEffect(function () {
+    if (showModelHint) {
+      var t = setTimeout(function () {
+        setShowModelHint(false);
+      }, 5000);
+      return function () {
+        clearTimeout(t);
+      };
+    }
+  }, [showModelHint]);
+
+  /* --- API Key pruefen --- */
+  var validateApiKey = function (key) {
+    if (!key) {
+      setApiKeyStatus("none");
+      return;
+    }
+    if (key.length < 10 || key.indexOf("sk-ant-") !== 0) {
+      apiKeyRef.current = "";
+      setApiKey("");
+      setApiKeyStatus("invalid");
+      return;
+    }
+    var controller = new AbortController();
+    var timeout = setTimeout(function () {
+      controller.abort();
+    }, 15000);
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 10,
+        messages: [{
+          role: "user",
+          content: "Hi"
+        }]
+      }),
+      signal: controller.signal
+    }).then(function (response) {
+      clearTimeout(timeout);
+      if (response.ok) {
+        setApiKeyStatus("valid");
+        if (!hasConfettiedRef.current) {
+          hasConfettiedRef.current = true;
+          setShowConfetti(true);
+        }
+      } else if (response.status === 401) {
+        setApiKeyStatus("invalid");
+      } else {
+        setApiKeyStatus("uncertain");
+      }
+    }).catch(function () {
+      clearTimeout(timeout);
+      setApiKeyStatus("uncertain");
+    });
+  };
+
+  /* --- Nachricht senden --- */
+  var sendMessage = function () {
+    if (!input.trim() || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
+    var userMessage = input.trim();
+    setInput("");
+    setError("");
+    var lowerMsg = userMessage.toLowerCase();
+    if (lowerMsg.indexOf("hummer") !== -1 || lowerMsg.indexOf("lobster") !== -1 || lowerMsg.indexOf("openclaw") !== -1) {
+      setLobsterWiggle(true);
+    }
+    var userMsg = {
+      role: "user",
+      content: userMessage,
+      sourceIds: []
+    };
+    setMessages(function (prev) {
+      return prev.concat([userMsg]);
+    });
+    setIsLoading(true);
+    var apiMessages = messages.filter(function (m) {
+      return !m.isWelcome;
+    }).concat([userMsg]).map(function (m) {
+      return {
+        role: m.role,
+        content: m.content
+      };
+    });
+    var trimmed = trimConversationHistory(apiMessages);
+    var controller = new AbortController();
+    var timeout = setTimeout(function () {
+      controller.abort();
+    }, 10000);
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKeyRef.current,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        max_tokens: 2048,
+        system: buildSystemPrompt(KNOWLEDGE_BASE),
+        messages: trimmed
+      }),
+      signal: controller.signal
+    }).then(function (response) {
+      clearTimeout(timeout);
+      if (!response.ok) {
+        return response.json().catch(function () {
+          return {};
+        }).then(function (errorBody) {
+          var status = response.status;
+          var errText = "";
+          if (status === 401) {
+            errText = "API-Key ung\u00fcltig oder abgelaufen. Pr\u00fcfe ihn unter console.anthropic.com/settings/keys";
+            setApiKeyStatus("invalid");
+          } else if (status === 429) {
+            errText = "Zu viele Anfragen - bitte kurz warten und erneut versuchen.";
+          } else if (status >= 500) {
+            errText = "Claude-Server vor\u00fcbergehend nicht erreichbar. Bitte versuche es gleich nochmal.";
+          } else {
+            errText = "Fehler (" + status + "): Bitte versuche es erneut.";
+          }
+          setError(errText);
+          setIsLoading(false);
+        });
+      }
+      return response.json().then(function (data) {
+        var answerText = data.content && data.content[0] && data.content[0].text || "";
+        var inputTokens = data.usage && data.usage.input_tokens || 0;
+        var outputTokens = data.usage && data.usage.output_tokens || 0;
+        var pricing = PRICING[selectedModel];
+        var callCost = inputTokens * pricing.input + outputTokens * pricing.output;
+        setTotalTokens(function (prev) {
+          return {
+            input: prev.input + inputTokens,
+            output: prev.output + outputTokens
+          };
+        });
+        setTotalCost(function (prev) {
+          return prev + callCost;
+        });
+        var parsed = parseSourcesFromResponse(answerText);
+        setLastSources(parsed.sourceIds);
+        var words = parsed.cleanText.split(" ");
+        typingWordsRef.current = words;
+        typingSourcesRef.current = parsed.sourceIds;
+        setTypingIndex(0);
+        setMessages(function (prev) {
+          return prev.concat([{
+            role: "assistant",
+            content: words[0] || "",
+            fullContent: parsed.cleanText,
+            sourceIds: [],
+            isTyping: true
+          }]);
+        });
+        setIsLoading(false);
+        setIsTyping(true);
+      });
+    }).catch(function (err) {
+      clearTimeout(timeout);
+      var errMsg = "";
+      if (err && err.name === "AbortError") {
+        errMsg = "Zeit\u00fcberschreitung - die Anfrage hat zu lange gedauert. Bitte versuche es erneut.";
+      } else {
+        errMsg = "Keine Internetverbindung - bitte pr\u00fcfe deine Verbindung und versuche es erneut.";
+      }
+      setError(errMsg);
+      setIsLoading(false);
+    });
+  };
+  var handleKeyDown = function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+  var handleModelChange = function (e) {
+    var newModel = e.target.value;
+    if (newModel === "claude-sonnet-4-5-20250929" && selectedModel !== "claude-sonnet-4-5-20250929") {
+      setShowModelHint(true);
+    }
+    setSelectedModel(newModel);
+  };
+  var toggleChunk = function (id) {
+    setExpandedChunks(function (prev) {
+      var copy = Object.assign({}, prev);
+      copy[id] = !copy[id];
+      return copy;
+    });
+  };
+  var resetConversation = function () {
+    setIsTyping(false);
+    setTypingIndex(0);
+    typingWordsRef.current = [];
+    setMessages([initialMsg]);
+    setInput("");
+    setError("");
+    setTotalTokens({
+      input: 0,
+      output: 0
+    });
+    setTotalCost(0);
+    setLastSources([]);
+    setSourcePanelOpen(false);
+    setExpandedChunks({});
+  };
+  var exampleQuestions = ["Was ist die SOUL.md?", "Wie starte ich OpenClaw?", "Welche Sub-Agenten gibt es?", "Wie funktioniert ein Masterprompt?"];
+  var handleExampleClick = function (question) {
+    setInput(question);
+  };
+  var canSend = input.trim() && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
+  var statusColors = {
+    none: "#9ca3af",
+    valid: "#22c55e",
+    invalid: "#ef4444",
+    uncertain: "#eab308"
+  };
+  var statusLabels = {
+    none: "Kein Key",
+    valid: "Verbunden",
+    invalid: "Ung\u00fcltiger Key",
+    uncertain: "Key gespeichert"
+  };
+  var messageCount = messages.filter(function (m) {
+    return !m.isWelcome;
+  }).length;
+
+  /* --- Styles (Dark/Light) --- */
+  var theme = {
+    bg: darkMode ? "#0f172a" : "#f8fafc",
+    text: darkMode ? "#e2e8f0" : "#1e293b",
+    cardBg: darkMode ? "#1e293b" : "#ffffff",
+    border: darkMode ? "#334155" : "#e2e8f0",
+    inputBg: darkMode ? "#334155" : "#ffffff",
+    inputText: darkMode ? "#e2e8f0" : "#1e293b",
+    mutedText: darkMode ? "#94a3b8" : "#64748b",
+    cowanBubble: darkMode ? "#1e293b" : "#f0fdfa",
+    userBubble: darkMode ? "#334155" : "#f1f5f9",
+    primary: "#0d9488",
+    primaryDark: "#0f766e"
+  };
+  var containerStyle = {
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    backgroundColor: theme.bg,
+    color: theme.text,
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontSize: "14px",
+    transition: "background-color 0.3s, color 0.3s"
+  };
+  var headerStyle = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "12px 16px",
+    borderBottom: "1px solid " + theme.border,
+    backgroundColor: theme.cardBg,
+    flexShrink: 0
+  };
+  var sectionStyle = {
+    padding: "12px 16px",
+    borderBottom: "1px solid " + theme.border,
+    flexShrink: 0
+  };
+  var innerMax = {
+    maxWidth: "720px",
+    margin: "0 auto",
+    width: "100%"
+  };
+  var inputStyle = {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid " + theme.border,
+    backgroundColor: theme.inputBg,
+    color: theme.inputText,
+    fontSize: "14px",
+    outline: "none",
+    flex: 1
+  };
+  var btnPrimary = {
+    padding: "8px 16px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: theme.primary,
+    color: "#ffffff",
+    fontWeight: 600,
+    fontSize: "14px",
+    cursor: "pointer"
+  };
+  var btnDisabled = Object.assign({}, btnPrimary, {
+    opacity: 0.4,
+    cursor: "not-allowed"
+  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: containerStyle
+  }, /*#__PURE__*/React.createElement("div", {
+    style: headerStyle
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "24px",
+      display: "inline-block",
+      animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none"
+    }
+  }, "\u{1F99E}"), /*#__PURE__*/React.createElement("style", {
+    dangerouslySetInnerHTML: {
+      __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }"
+    }
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: "16px",
+      color: theme.primaryDark
+    }
+  }, "Cowan - Die Buch-Instanz"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "11px",
+      color: theme.mutedText
+    }
+  }, "Agentic Authorship Wissensassistent"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "8px",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: resetConversation,
+    style: {
+      padding: "6px 12px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      color: theme.primary,
+      cursor: "pointer",
+      fontSize: "12px",
+      fontWeight: 600
+    }
+  }, "+ Neue Konversation"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setTutorialStep(0);
+      setShowTutorial(true);
+    },
+    style: {
+      padding: "6px 10px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      color: theme.mutedText,
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: 700
+    }
+  }, "?"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setDarkMode(!darkMode);
+    },
+    style: {
+      padding: "6px 10px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      color: theme.text,
+      cursor: "pointer",
+      fontSize: "16px"
+    }
+  }, darkMode ? "\u2600\uFE0F" : "\u{1F319}"))), /*#__PURE__*/React.createElement("div", {
+    style: sectionStyle
+  }, /*#__PURE__*/React.createElement("div", {
+    style: innerMax
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "12px",
+      alignItems: "flex-end"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 180px",
+      maxWidth: "320px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 600,
+      color: theme.mutedText,
+      marginBottom: "4px",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\u{1F511} API-Key"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+      fontWeight: 400
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "8px",
+      height: "8px",
+      borderRadius: "50%",
+      backgroundColor: statusColors[apiKeyStatus],
+      display: "inline-block"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "11px",
+      color: statusColors[apiKeyStatus]
+    }
+  }, statusLabels[apiKeyStatus]))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "8px"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "password",
+    value: apiKey,
+    onChange: function (e) {
+      updateApiKey(e.target.value);
+    },
+    onKeyDown: function (e) {
+      if (e.key === "Enter") validateApiKey(apiKeyRef.current);
+    },
+    placeholder: "sk-ant-...",
+    style: Object.assign({}, inputStyle, {
+      flex: 1
+    })
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      validateApiKey(apiKeyRef.current);
+    },
+    style: btnPrimary
+  }, "Pr\xFCfen"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      fontWeight: 600,
+      color: theme.mutedText,
+      marginBottom: "4px"
+    }
+  }, "Modell"), /*#__PURE__*/React.createElement("select", {
+    value: selectedModel,
+    onChange: handleModelChange,
+    style: Object.assign({}, inputStyle, {
+      flex: "none",
+      minWidth: "120px"
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "claude-haiku-4-5-20251001"
+  }, "Haiku 4.5"), /*#__PURE__*/React.createElement("option", {
+    value: "claude-sonnet-4-5-20250929"
+  }, "Sonnet 4.5"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 120px",
+      fontSize: "11px",
+      color: theme.mutedText,
+      lineHeight: 1.5,
+      paddingBottom: "2px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: "2px"
+    }
+  }, selectedModel === "claude-sonnet-4-5-20250929" ? "Sonnet: Detaillierter, 3-5x teurer" : "Haiku: Schnell & kosteng\u00fcnstig"), /*#__PURE__*/React.createElement("a", {
+    href: "https://console.anthropic.com/settings/keys",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      color: theme.primary,
+      textDecoration: "underline",
+      fontSize: "11px"
+    }
+  }, "Noch keinen Key? Hier erstellen"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "11px",
+      color: theme.mutedText,
+      marginTop: "6px"
+    }
+  }, "\u{1F512} Gib deinen Key nur auf Ger\u00e4ten ein, denen du vertraust."), showModelHint && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: "8px",
+      padding: "8px 12px",
+      borderRadius: "8px",
+      backgroundColor: darkMode ? "#422006" : "#fefce8",
+      color: darkMode ? "#fbbf24" : "#92400e",
+      fontSize: "12px",
+      border: "1px solid " + (darkMode ? "#854d0e" : "#fde68a")
+    }
+  }, "Sonnet kostet ca. 3-5x mehr als Haiku pro Frage."))), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 16px",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: innerMax
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px",
+      borderRadius: "8px",
+      backgroundColor: darkMode ? "#450a0a" : "#fef2f2",
+      color: darkMode ? "#fca5a5" : "#991b1b",
+      fontSize: "13px",
+      border: "1px solid " + (darkMode ? "#7f1d1d" : "#fecaca"),
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, error), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setError("");
+    },
+    style: {
+      background: "none",
+      border: "none",
+      fontWeight: 700,
+      cursor: "pointer",
+      color: "inherit",
+      fontSize: "16px"
+    }
+  }, "x")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "16px",
+      minHeight: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: innerMax
+  }, messages.map(function (msg, i) {
+    var isAssistant = msg.role === "assistant";
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        justifyContent: isAssistant ? "flex-start" : "flex-end",
+        marginBottom: "12px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        maxWidth: "85%",
+        borderRadius: "12px",
+        padding: "12px 16px",
+        backgroundColor: isAssistant ? theme.cowanBubble : theme.userBubble,
+        border: "1px solid " + theme.border
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "8px"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: "18px",
+        flexShrink: 0
+      }
+    }, isAssistant ? "\u{1F99E}" : "\u{1F464}"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: "11px",
+        fontWeight: 600,
+        color: theme.mutedText,
+        marginBottom: "4px"
+      }
+    }, isAssistant ? "Cowan" : "Du"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        lineHeight: 1.6,
+        wordBreak: "break-word"
+      },
+      dangerouslySetInnerHTML: {
+        __html: renderMarkdown(msg.content)
+      }
+    }), isAssistant && msg.isWelcome && messageCount === 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: "12px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "8px"
+      }
+    }, exampleQuestions.map(function (q, qi) {
+      return /*#__PURE__*/React.createElement("button", {
+        key: qi,
+        onClick: function () {
+          handleExampleClick(q);
+        },
+        style: {
+          padding: "10px 12px",
+          borderRadius: "12px",
+          border: "1px solid " + theme.border,
+          backgroundColor: darkMode ? "#334155" : "#f1f5f9",
+          color: theme.text,
+          fontSize: "12px",
+          cursor: "pointer",
+          fontWeight: 400,
+          textAlign: "left",
+          transition: "background-color 0.2s"
+        }
+      }, q);
+    }))), isAssistant && !msg.isWelcome && msg.sourceIds && msg.sourceIds.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: "8px",
+        paddingTop: "8px",
+        borderTop: "1px solid " + theme.border,
+        fontSize: "12px",
+        color: theme.primary
+      }
+    }, "\u{1F4DA} Quellen: " + msg.sourceIds.map(function (id) {
+      var c = KNOWLEDGE_BASE.find(function (ch) {
+        return ch.id === id;
+      });
+      return c ? c.title : id;
+    }).join(", ")), isAssistant && !msg.isWelcome && !msg.isTyping && (!msg.sourceIds || msg.sourceIds.length === 0) && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: "8px",
+        paddingTop: "8px",
+        borderTop: "1px solid " + theme.border,
+        fontSize: "11px",
+        color: theme.mutedText
+      }
+    }, "Keine Quellen zugeordnet")))));
+  }), isLoading && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "flex-start",
+      marginBottom: "12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: "12px",
+      padding: "12px 16px",
+      backgroundColor: theme.cowanBubble,
+      border: "1px solid " + theme.border,
+      display: "flex",
+      alignItems: "center",
+      gap: "8px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "18px"
+    }
+  }, "\u{1F99E}"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: theme.mutedText,
+      fontSize: "13px",
+      display: "flex",
+      alignItems: "center",
+      gap: "4px"
+    }
+  }, "Cowan denkt nach", /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "inline-flex",
+      gap: "3px",
+      marginLeft: "2px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "5px",
+      height: "5px",
+      borderRadius: "50%",
+      backgroundColor: theme.primary,
+      display: "inline-block",
+      animation: "cowanDot 1.4s infinite ease-in-out",
+      animationDelay: "0s"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "5px",
+      height: "5px",
+      borderRadius: "50%",
+      backgroundColor: theme.primary,
+      display: "inline-block",
+      animation: "cowanDot 1.4s infinite ease-in-out",
+      animationDelay: "0.2s"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "5px",
+      height: "5px",
+      borderRadius: "50%",
+      backgroundColor: theme.primary,
+      display: "inline-block",
+      animation: "cowanDot 1.4s infinite ease-in-out",
+      animationDelay: "0.4s"
+    }
+  }))), /*#__PURE__*/React.createElement("style", {
+    dangerouslySetInnerHTML: {
+      __html: "@keyframes cowanDot { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }"
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    ref: chatEndRef
+  }))), messageCount >= 10 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "4px 16px",
+      fontSize: "11px",
+      color: darkMode ? "#eab308" : "#d97706"
+    }
+  }, "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, sectionStyle, {
+      borderBottom: "none",
+      borderTop: "1px solid " + theme.border
+    })
+  }, /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, innerMax, {
+      display: "flex",
+      gap: "8px"
+    })
+  }, /*#__PURE__*/React.createElement("textarea", {
+    value: input,
+    onChange: function (e) {
+      setInput(e.target.value);
+    },
+    onKeyDown: handleKeyDown,
+    placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Bitte zuerst einen g\u00fcltigen API-Key eingeben..." : "Stelle deine Frage...",
+    disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
+    rows: 1,
+    style: Object.assign({}, inputStyle, {
+      resize: "none",
+      minHeight: "42px",
+      maxHeight: "120px",
+      opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.5 : 1
+    })
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: sendMessage,
+    disabled: !canSend,
+    style: canSend ? btnPrimary : btnDisabled
+  }, isLoading ? "..." : "Senden"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid " + theme.border,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: innerMax
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setSourcePanelOpen(!sourcePanelOpen);
+    },
+    style: {
+      width: "100%",
+      padding: "8px 16px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      background: "none",
+      border: "none",
+      color: theme.text,
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: 600
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\u{1F4CA} Verwendete Quellen" + (lastSources.length > 0 ? " (" + lastSources.length + ")" : "")), /*#__PURE__*/React.createElement("span", null, sourcePanelOpen ? "\u25BE" : "\u25B8")), sourcePanelOpen && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 16px 12px"
+    }
+  }, lastSources.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      color: theme.mutedText
+    }
+  }, "Keine Quellen zugeordnet") : lastSources.map(function (id) {
+    var chunk = KNOWLEDGE_BASE.find(function (c) {
+      return c.id === id;
+    });
+    if (!chunk) return /*#__PURE__*/React.createElement("div", {
+      key: id,
+      style: {
+        fontSize: "12px",
+        color: theme.mutedText
+      }
+    }, "Unbekannt: " + id);
+    var isExpanded = expandedChunks[id];
+    return /*#__PURE__*/React.createElement("div", {
+      key: id,
+      style: {
+        border: "1px solid " + theme.border,
+        borderRadius: "8px",
+        marginBottom: "8px"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: function () {
+        toggleChunk(id);
+      },
+      style: {
+        width: "100%",
+        padding: "8px 12px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "none",
+        border: "none",
+        color: theme.text,
+        cursor: "pointer",
+        fontSize: "13px",
+        textAlign: "left"
+      }
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", null, chunk.title), /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: "8px",
+        padding: "2px 8px",
+        borderRadius: "12px",
+        backgroundColor: darkMode ? "#134e4a" : "#ccfbf1",
+        color: theme.primary,
+        fontSize: "11px"
+      }
+    }, chunk.category)), /*#__PURE__*/React.createElement("span", null, isExpanded ? "\u25BE" : "\u25B8")), isExpanded && /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 12px 12px",
+        fontSize: "12px",
+        color: theme.mutedText
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontStyle: "italic",
+        marginBottom: "8px"
+      }
+    }, chunk.summary), /*#__PURE__*/React.createElement("div", {
+      style: {
+        lineHeight: 1.6
+      },
+      dangerouslySetInnerHTML: {
+        __html: renderMarkdown(chunk.content)
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: "8px"
+      }
+    }, "\u{1F4D6} Quelle: " + chunk.source)));
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      padding: "8px 16px",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, innerMax, {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: "8px"
+    })
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "16px",
+      fontSize: "12px",
+      color: theme.mutedText
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "Kosten: $" + totalCost.toFixed(4) + " USD"), /*#__PURE__*/React.createElement("span", null, "Modell: " + PRICING[selectedModel].label)), /*#__PURE__*/React.createElement("a", {
+    href: "https://docs.anthropic.com/en/docs/about-claude/pricing",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      color: theme.primary,
+      fontSize: "10px",
+      textDecoration: "underline"
+    }
+  }, "Aktuelle Preise")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      fontSize: "10px",
+      color: theme.mutedText,
+      marginTop: "4px"
+    }
+  }, "Ein unabh\u00e4ngiger Leitfaden. Claude ist eine Marke von Anthropic PBC, n8n ist eine Marke der n8n GmbH.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      right: xPanelOpen ? "308px" : "8px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      display: "flex",
+      flexDirection: "column",
+      gap: "8px",
+      zIndex: 10001,
+      transition: "right 0.3s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: function () {
+      setSocialComingSoon("");
+      setXPanelOpen(!xPanelOpen);
+    },
+    title: "Frag auf X",
+    style: {
+      width: "44px",
+      height: "44px",
+      borderRadius: "50%",
+      backgroundColor: "#1d9bf0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+      border: xPanelOpen ? "2px solid " + theme.primary : "2px solid transparent"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "22",
+    height: "22",
+    viewBox: "0 0 24 24",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M3 21l3.25-3.25M9.5 14.5L3 21M21 3l-9.5 9.5M21 3l-2.5 7.5L12 14l-3.5-3.5L12 8 19.5 5.5 21 3z",
+    stroke: "#ffffff",
+    strokeWidth: "1.8",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M15 2h5.5M20.5 2v5.5",
+    stroke: "#ffffff",
+    strokeWidth: "1.8",
+    strokeLinecap: "round"
+  }))), /*#__PURE__*/React.createElement("div", {
+    onClick: function () {
+      setXPanelOpen(false);
+      setSocialComingSoon(socialComingSoon === "wa" ? "" : "wa");
+    },
+    title: "WhatsApp (bald verf\\u00fcgbar)",
+    style: {
+      width: "44px",
+      height: "44px",
+      borderRadius: "50%",
+      backgroundColor: "#25D366",
+      color: "#ffffff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      fontSize: "22px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+      border: socialComingSoon === "wa" ? "2px solid " + theme.primary : "2px solid transparent"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "24",
+    height: "24",
+    viewBox: "0 0 24 24",
+    fill: "#ffffff"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.96 7.96 0 01-4.108-1.14l-.292-.175-3.04.797.81-2.957-.192-.304A7.963 7.963 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"
+  }))), /*#__PURE__*/React.createElement("div", {
+    onClick: function () {
+      setXPanelOpen(false);
+      setSocialComingSoon(socialComingSoon === "tg" ? "" : "tg");
+    },
+    title: "Telegram (bald verf\\u00fcgbar)",
+    style: {
+      width: "44px",
+      height: "44px",
+      borderRadius: "50%",
+      backgroundColor: "#0088cc",
+      color: "#ffffff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      fontSize: "22px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+      border: socialComingSoon === "tg" ? "2px solid " + theme.primary : "2px solid transparent"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "22",
+    height: "22",
+    viewBox: "0 0 24 24",
+    fill: "#ffffff"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"
+  })))), socialComingSoon && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      right: "40px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+      border: "1px solid " + theme.border,
+      borderRadius: "12px",
+      padding: "20px",
+      zIndex: 10002,
+      maxWidth: "220px",
+      textAlign: "center",
+      boxShadow: "-4px 0 20px rgba(0,0,0,0.15)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "28px",
+      marginBottom: "8px"
+    }
+  }, socialComingSoon === "wa" ? "\u{1F4AC}" : "\u2708\uFE0F"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "14px",
+      fontWeight: 700,
+      color: theme.text,
+      marginBottom: "4px"
+    }
+  }, socialComingSoon === "wa" ? "WhatsApp" : "Telegram"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      color: theme.mutedText,
+      lineHeight: 1.5
+    }
+  }, "Demn\u00e4chst verf\u00fcgbar! Hier kannst du bald deine Fragen direkt per " + (socialComingSoon === "wa" ? "WhatsApp" : "Telegram") + " stellen."), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setSocialComingSoon("");
+    },
+    style: {
+      marginTop: "12px",
+      padding: "6px 16px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: "transparent",
+      color: theme.mutedText,
+      fontSize: "12px",
+      cursor: "pointer"
+    }
+  }, "OK")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      right: xPanelOpen ? "0px" : "-300px",
+      top: 0,
+      width: "300px",
+      height: "100%",
+      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+      borderLeft: "1px solid " + theme.border,
+      zIndex: 10000,
+      display: "flex",
+      flexDirection: "column",
+      transition: "right 0.3s ease",
+      boxShadow: xPanelOpen ? "-4px 0 20px rgba(0,0,0,0.2)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "16px",
+      borderBottom: "1px solid " + theme.border,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: "15px",
+      color: theme.text
+    }
+  }, "Frag Cowan auf X"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setXPanelOpen(false);
+    },
+    style: {
+      background: "none",
+      border: "none",
+      color: theme.mutedText,
+      fontSize: "18px",
+      cursor: "pointer",
+      fontWeight: 700
+    }
+  }, "x")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "16px",
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      color: theme.mutedText,
+      lineHeight: 1.5
+    }
+  }, "Schreibe deine Frage und poste sie auf X. Die Community und @Thiburg helfen dir weiter!"), /*#__PURE__*/React.createElement("textarea", {
+    value: xInput,
+    onChange: function (e) {
+      setXInput(e.target.value);
+    },
+    placeholder: "Deine Frage an Cowan...",
+    style: {
+      flex: 1,
+      padding: "12px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.inputBg,
+      color: theme.inputText,
+      fontSize: "13px",
+      resize: "none",
+      outline: "none",
+      minHeight: "120px",
+      lineHeight: 1.5
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "11px",
+      color: theme.mutedText
+    }
+  }, 280 - ("@Thiburg ".length + (xInput || "").length + " #AgenticAuthorship #OpenClaw".length) + " Zeichen verbleibend"), /*#__PURE__*/React.createElement("a", {
+    href: "https://twitter.com/intent/tweet?text=" + encodeURIComponent("@Thiburg " + (xInput || "Meine Frage an Cowan") + " #AgenticAuthorship #OpenClaw"),
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      display: "block",
+      padding: "12px",
+      borderRadius: "8px",
+      border: "none",
+      backgroundColor: "#1d9bf0",
+      color: "#ffffff",
+      fontSize: "14px",
+      fontWeight: 600,
+      textAlign: "center",
+      textDecoration: "none",
+      cursor: xInput.trim() ? "pointer" : "not-allowed",
+      opacity: xInput.trim() ? 1 : 0.5
+    }
+  }, "Auf X posten"))), showTutorial && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0,0,0,0.6)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10000
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+      borderRadius: "16px",
+      padding: "32px",
+      maxWidth: "400px",
+      width: "90%",
+      textAlign: "center",
+      border: "1px solid " + theme.border
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "48px",
+      marginBottom: "16px"
+    }
+  }, tutorialSteps[tutorialStep].icon), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "18px",
+      fontWeight: 700,
+      color: theme.text,
+      marginBottom: "8px"
+    }
+  }, tutorialSteps[tutorialStep].title), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "13px",
+      color: theme.mutedText,
+      lineHeight: 1.6,
+      marginBottom: "24px"
+    }
+  }, tutorialSteps[tutorialStep].text), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "center",
+      gap: "6px",
+      marginBottom: "20px"
+    }
+  }, tutorialSteps.map(function (_, si) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: si,
+      style: {
+        width: "8px",
+        height: "8px",
+        borderRadius: "50%",
+        backgroundColor: si === tutorialStep ? theme.primary : darkMode ? "#334155" : "#e2e8f0"
+      }
+    });
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "8px",
+      justifyContent: "center"
+    }
+  }, tutorialStep > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setTutorialStep(tutorialStep - 1);
+    },
+    style: {
+      padding: "10px 20px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer"
+    }
+  }, "Zur\u00fcck"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      if (tutorialStep < tutorialSteps.length - 1) {
+        setTutorialStep(tutorialStep + 1);
+      } else {
+        setShowTutorial(false);
+      }
+    },
+    style: {
+      padding: "10px 20px",
+      borderRadius: "8px",
+      border: "none",
+      backgroundColor: theme.primary,
+      color: "#ffffff",
+      fontSize: "14px",
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, tutorialStep < tutorialSteps.length - 1 ? "Weiter" : "Los geht's!")))), showConfetti && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      pointerEvents: "none",
+      overflow: "hidden",
+      zIndex: 9999
+    }
+  }, /*#__PURE__*/React.createElement("style", {
+    dangerouslySetInnerHTML: {
+      __html: "@keyframes confettiFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }"
+    }
+  }), Array.apply(null, Array(30)).map(function (_, i) {
+    var colors = ["#0d9488", "#f59e0b", "#ef4444", "#8b5cf6", "#22c55e", "#ec4899"];
+    var color = colors[i % colors.length];
+    var left = Math.round((i * 37 + 13) % 100);
+    var delay = (i * 0.08).toFixed(2);
+    var size = 6 + i % 4 * 2;
+    var duration = (2 + i % 3).toFixed(1);
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        position: "absolute",
+        top: "-10px",
+        left: left + "%",
+        width: size + "px",
+        height: size + "px",
+        backgroundColor: color,
+        borderRadius: i % 2 === 0 ? "50%" : "2px",
+        animation: "confettiFall " + duration + "s ease-out " + delay + "s forwards"
+      }
+    });
+  })));
+}
+
+/* --- App rendern & Loading Screen ausblenden --- */
+var root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(CowanApp, null));
+
+/* Loading-Screen nach Render ausblenden */
+setTimeout(function () {
+  var loadingEl = document.getElementById("loading");
+  if (loadingEl) {
+    loadingEl.classList.add("fade-out");
+    setTimeout(function () {
+      loadingEl.remove();
+    }, 500);
+  }
+}, 300);
+
+  </script>
+</body>
+</html>
