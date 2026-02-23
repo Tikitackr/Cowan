@@ -2,15 +2,17 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Cowan – Die Buch-Instanz | Agentic Authorship</title>
   <meta name="description" content="KI-Wissensassistent fuer das Buch Agentic Authorship - Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>" />
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     #root { height: 100%; }
     ::-webkit-scrollbar { width: 6px; }
@@ -27,6 +29,11 @@
     #loading .emoji { font-size: 64px; animation: pulse 1.5s ease-in-out infinite; }
     #loading .text { color: #94a3b8; font-size: 14px; margin-top: 16px; }
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    /* iOS keyboard fix */
+    @supports (-webkit-touch-callout: none) {
+      html { height: -webkit-fill-available; }
+      body { min-height: -webkit-fill-available; }
+    }
   </style>
 </head>
 <body>
@@ -257,6 +264,9 @@ function CowanApp() {
   var _showMobileMenu = useState(false);
   var showMobileMenu = _showMobileMenu[0];
   var setShowMobileMenu = _showMobileMenu[1];
+  var _apiKeyCollapsed = useState(false);
+  var apiKeyCollapsed = _apiKeyCollapsed[0];
+  var setApiKeyCollapsed = _apiKeyCollapsed[1];
   useEffect(function () {
     var handleResize = function () {
       setIsMobile(window.innerWidth < 640);
@@ -558,6 +568,9 @@ function CowanApp() {
       clearTimeout(timeout);
       if (response.ok) {
         setApiKeyStatus("valid");
+        if (isMobile) {
+          setApiKeyCollapsed(true);
+        }
         if (!hasConfettiedRef.current) {
           hasConfettiedRef.current = true;
           setShowConfetti(true);
@@ -850,7 +863,8 @@ function CowanApp() {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "12px 16px",
+    padding: isMobile ? "8px 10px" : "12px 16px",
+    paddingTop: isMobile ? "calc(8px + env(safe-area-inset-top, 0px))" : "12px",
     borderBottom: "1px solid " + theme.border,
     backgroundColor: theme.cardBg,
     flexShrink: 0
@@ -1108,7 +1122,16 @@ function CowanApp() {
       overflow: "hidden",
       minWidth: "200px"
     }
-  }, /*#__PURE__*/React.createElement("button", {
+  }, totalTokens.input + totalTokens.output > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 16px",
+      fontSize: "11px",
+      color: theme.mutedText,
+      borderBottom: "1px solid " + theme.border,
+      display: "flex",
+      gap: "12px"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "$" + totalCost.toFixed(4))), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setChunkBrowserIndex(0);
       setShowChunkBrowser(true);
@@ -1235,13 +1258,61 @@ function CowanApp() {
     }
   }), /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, sectionStyle, isMobile ? {
-      padding: "6px 10px"
+      padding: "4px 10px"
     } : {})
   }, /*#__PURE__*/React.createElement("div", {
     style: innerMax
   }, isMobile ?
   /*#__PURE__*/
-  /* --- Mobile: ultra-kompaktes Layout --- */
+  /* --- Mobile: einklappbar nach Validierung --- */
+  React.createElement("div", null, apiKeyCollapsed && apiKeyStatus === "valid" ?
+  /*#__PURE__*/
+  /* Collapsed: Mini-Zeile */
+  React.createElement("div", {
+    onClick: function () {
+      setApiKeyCollapsed(false);
+    },
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "4px 0",
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      fontSize: "12px",
+      color: theme.mutedText
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD11"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "7px",
+      height: "7px",
+      borderRadius: "50%",
+      backgroundColor: "#22c55e",
+      display: "inline-block"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#22c55e",
+      fontSize: "11px"
+    }
+  }, "Verbunden"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: theme.mutedText,
+      fontSize: "11px"
+    }
+  }, PRICING[selectedModel].label)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "10px",
+      color: theme.mutedText
+    }
+  }, "Bearbeiten ▸")) :
+  /*#__PURE__*/
+  /* Expanded: Input-Felder */
   React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1329,7 +1400,7 @@ function CowanApp() {
       textDecoration: "underline",
       fontSize: "10px"
     }
-  }, "Key erstellen"))) :
+  }, "Key erstellen")))) :
   /*#__PURE__*/
   /* --- Desktop: bestehendes Layout --- */
   React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -1671,11 +1742,13 @@ function CowanApp() {
       color: darkMode ? "#eab308" : "#d97706"
     }
   }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), /*#__PURE__*/React.createElement("div", {
-    style: Object.assign({}, sectionStyle, {
-      borderBottom: "none",
+    style: {
       borderTop: "1px solid " + theme.border,
-      padding: isMobile ? "8px 8px" : "12px 16px"
-    })
+      padding: isMobile ? "6px 8px" : "12px 16px",
+      paddingBottom: isMobile ? "calc(6px + env(safe-area-inset-bottom, 0px))" : "12px",
+      flexShrink: 0,
+      backgroundColor: theme.cardBg
+    }
   }, /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, innerMax, {
       display: "flex",
@@ -1692,7 +1765,7 @@ function CowanApp() {
     rows: 1,
     style: Object.assign({}, inputStyle, {
       resize: "none",
-      minHeight: isMobile ? "44px" : "42px",
+      minHeight: isMobile ? "40px" : "42px",
       maxHeight: "120px",
       opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.5 : 1,
       fontSize: isMobile ? "16px" : "14px"
@@ -1701,8 +1774,8 @@ function CowanApp() {
     onClick: sendMessage,
     disabled: !canSend,
     style: Object.assign({}, canSend ? btnPrimary : btnDisabled, isMobile ? {
-      padding: "8px 14px",
-      minHeight: "44px"
+      padding: "6px 14px",
+      minHeight: "40px"
     } : {})
   }, isLoading ? "..." : isMobile ? "➤" : "Senden"))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1806,11 +1879,11 @@ function CowanApp() {
         marginTop: "8px"
       }
     }, "📖 Quelle: " + chunk.source)));
-  })))), /*#__PURE__*/React.createElement("div", {
+  })))), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid " + theme.border,
       backgroundColor: theme.cardBg,
-      padding: isMobile ? "6px 8px" : "8px 16px",
+      padding: "8px 16px",
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1819,17 +1892,16 @@ function CowanApp() {
       flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
-      gap: isMobile ? "4px" : "8px"
+      gap: "8px"
     })
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: isMobile ? "8px" : "16px",
-      fontSize: isMobile ? "10px" : "12px",
-      color: theme.mutedText,
-      flexWrap: "wrap"
+      gap: "16px",
+      fontSize: "12px",
+      color: theme.mutedText
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Tokens: ", (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "$" + totalCost.toFixed(4)), /*#__PURE__*/React.createElement("span", null, PRICING[selectedModel].label)), !isMobile && /*#__PURE__*/React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("span", null, "Tokens: ", (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "Kosten: $" + totalCost.toFixed(4) + " USD"), /*#__PURE__*/React.createElement("span", null, "Modell: ", PRICING[selectedModel].label)), /*#__PURE__*/React.createElement("a", {
     href: "https://docs.anthropic.com/en/docs/about-claude/pricing",
     target: "_blank",
     rel: "noopener noreferrer",
@@ -1838,7 +1910,7 @@ function CowanApp() {
       fontSize: "10px",
       textDecoration: "underline"
     }
-  }, "Aktuelle Preise")), !isMobile && /*#__PURE__*/React.createElement("div", {
+  }, "Aktuelle Preise")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: "10px",
