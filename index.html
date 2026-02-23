@@ -25,7 +25,7 @@
     }
     #loading.fade-out { opacity: 0; pointer-events: none; }
     #loading .emoji { font-size: 64px; animation: pulse 1.5s ease-in-out infinite; }
-    #loading .text { color: #94a3b8; font-size: 14px; margin-top: 16px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #loading .text { color: #94a3b8; font-size: 14px; margin-top: 16px; }
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
   </style>
 </head>
@@ -36,7 +36,6 @@
   </div>
   <div id="root"></div>
   <script>
-/* React Hooks aus globalem React-Objekt */
 const { useState, useRef, useEffect, useCallback } = React;
 
 /* ==========================================================
@@ -1236,22 +1235,114 @@ function CowanApp() {
     }
   }), /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, sectionStyle, isMobile ? {
-      padding: "10px 12px"
+      padding: "6px 10px"
     } : {})
   }, /*#__PURE__*/React.createElement("div", {
     style: innerMax
-  }, /*#__PURE__*/React.createElement("div", {
+  }, isMobile ?
+  /*#__PURE__*/
+  /* --- Mobile: ultra-kompaktes Layout --- */
+  React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      flexDirection: isMobile ? "column" : "row",
+      gap: "6px",
+      alignItems: "flex-end",
+      marginBottom: "4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "11px",
+      fontWeight: 600,
+      color: theme.mutedText,
+      marginBottom: "2px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD11"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: "7px",
+      height: "7px",
+      borderRadius: "50%",
+      backgroundColor: statusColors[apiKeyStatus],
+      display: "inline-block"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "10px",
+      color: statusColors[apiKeyStatus]
+    }
+  }, statusLabels[apiKeyStatus])), /*#__PURE__*/React.createElement("input", {
+    type: "password",
+    value: apiKey,
+    onChange: function (e) {
+      updateApiKey(e.target.value);
+    },
+    onKeyDown: function (e) {
+      if (e.key === "Enter") validateApiKey(apiKeyRef.current);
+    },
+    placeholder: "sk-ant-...",
+    style: Object.assign({}, inputStyle, {
+      width: "100%",
+      fontSize: "16px",
+      padding: "6px 10px"
+    })
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      validateApiKey(apiKeyRef.current);
+    },
+    style: Object.assign({}, btnPrimary, {
+      padding: "6px 12px",
+      fontSize: "13px"
+    })
+  }, "OK"), /*#__PURE__*/React.createElement("select", {
+    value: selectedModel,
+    onChange: handleModelChange,
+    style: Object.assign({}, inputStyle, {
+      flex: "none",
+      width: "90px",
+      fontSize: "12px",
+      padding: "6px 4px"
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "claude-haiku-4-5-20251001"
+  }, "Haiku"), /*#__PURE__*/React.createElement("option", {
+    value: "claude-sonnet-4-5-20250929"
+  }, "Sonnet"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      fontSize: "10px",
+      color: theme.mutedText
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD12 Key bleibt lokal"), /*#__PURE__*/React.createElement("a", {
+    href: "https://console.anthropic.com/settings/keys",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      color: theme.primary,
+      textDecoration: "underline",
+      fontSize: "10px"
+    }
+  }, "Key erstellen"))) :
+  /*#__PURE__*/
+  /* --- Desktop: bestehendes Layout --- */
+  React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
       flexWrap: "wrap",
-      gap: isMobile ? "8px" : "12px",
-      alignItems: isMobile ? "stretch" : "flex-end"
+      gap: "12px",
+      alignItems: "flex-end"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: "1 1 180px",
-      maxWidth: isMobile ? "none" : "320px"
+      maxWidth: "320px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1299,25 +1390,14 @@ function CowanApp() {
     },
     placeholder: "sk-ant-...",
     style: Object.assign({}, inputStyle, {
-      flex: 1,
-      fontSize: isMobile ? "16px" : "14px"
+      flex: 1
     })
   }), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       validateApiKey(apiKeyRef.current);
     },
     style: btnPrimary
-  }, isMobile ? "OK" : "Prüfen"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: "8px",
-      alignItems: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: isMobile ? 1 : "none"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "Pr\xFCfen"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: "12px",
       fontWeight: 600,
@@ -1329,21 +1409,13 @@ function CowanApp() {
     onChange: handleModelChange,
     style: Object.assign({}, inputStyle, {
       flex: "none",
-      minWidth: "120px",
-      width: isMobile ? "100%" : "auto",
-      fontSize: isMobile ? "16px" : "14px"
+      minWidth: "120px"
     })
   }, /*#__PURE__*/React.createElement("option", {
     value: "claude-haiku-4-5-20251001"
   }, "Haiku 4.5"), /*#__PURE__*/React.createElement("option", {
     value: "claude-sonnet-4-5-20250929"
-  }, "Sonnet 4.5"))), isMobile && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: "11px",
-      color: theme.mutedText,
-      paddingBottom: "10px"
-    }
-  }, selectedModel === "claude-sonnet-4-5-20250929" ? "3-5x teurer" : "Günstig")), !isMobile && /*#__PURE__*/React.createElement("div", {
+  }, "Sonnet 4.5"))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: "1 1 120px",
       fontSize: "11px",
@@ -1368,23 +1440,9 @@ function CowanApp() {
     style: {
       fontSize: "11px",
       color: theme.mutedText,
-      marginTop: "6px",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      flexWrap: "wrap",
-      gap: "4px"
+      marginTop: "6px"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD12 Key bleibt nur in deinem Browser."), isMobile && /*#__PURE__*/React.createElement("a", {
-    href: "https://console.anthropic.com/settings/keys",
-    target: "_blank",
-    rel: "noopener noreferrer",
-    style: {
-      color: theme.primary,
-      textDecoration: "underline",
-      fontSize: "11px"
-    }
-  }, "Key erstellen")), showModelHint && /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDD12 Gib deinen Key nur auf Ger\xE4ten ein, denen du vertraust.")), showModelHint && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: "8px",
       padding: "8px 12px",
@@ -1492,9 +1550,9 @@ function CowanApp() {
       style: {
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        gap: "8px"
+        gap: "6px"
       }
-    }, exampleQuestions.map(function (q, qi) {
+    }, (isMobile ? exampleQuestions.slice(0, 2) : exampleQuestions).map(function (q, qi) {
       return /*#__PURE__*/React.createElement("button", {
         key: qi,
         onClick: function () {
@@ -1648,8 +1706,9 @@ function CowanApp() {
     } : {})
   }, isLoading ? "..." : isMobile ? "➤" : "Senden"))), /*#__PURE__*/React.createElement("div", {
     style: {
-      borderTop: "1px solid " + theme.border,
-      flexShrink: 0
+      borderTop: isMobile ? "none" : "1px solid " + theme.border,
+      flexShrink: 0,
+      display: isMobile ? "none" : "block"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: innerMax
@@ -2336,7 +2395,6 @@ function CowanApp() {
   })));
 }
 
-/* --- App rendern --- */
 var root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(React.createElement(CowanApp));
 setTimeout(function() {
