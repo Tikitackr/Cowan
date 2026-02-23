@@ -943,6 +943,12 @@ function CowanApp() {
     primary: "#0d9488",
     primaryDark: "#0f766e"
   };
+
+  /* Body-Hintergrund setzen damit bei iOS Keyboard kein weisser Hintergrund durchscheint */
+  useEffect(function () {
+    document.body.style.backgroundColor = darkMode ? "#0f172a" : "#f8fafc";
+    document.documentElement.style.backgroundColor = darkMode ? "#0f172a" : "#f8fafc";
+  }, [darkMode]);
   var containerStyle = {
     height: isMobile ? viewportHeight + "px" : "100vh",
     display: "flex",
@@ -1933,7 +1939,7 @@ function CowanApp() {
   }), /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, innerMax, {
       display: "flex",
-      gap: "8px",
+      gap: isMobile ? "4px" : "8px",
       alignItems: "flex-end"
     })
   }, /*#__PURE__*/React.createElement("button", {
@@ -1948,9 +1954,10 @@ function CowanApp() {
       borderRadius: "8px",
       color: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? theme.mutedText : theme.primary,
       cursor: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "not-allowed" : "pointer",
-      padding: isMobile ? "8px" : "8px 10px",
-      minHeight: isMobile ? "40px" : "42px",
-      fontSize: isMobile ? "18px" : "16px",
+      padding: isMobile ? "6px" : "8px 10px",
+      minWidth: isMobile ? "36px" : "auto",
+      minHeight: isMobile ? "36px" : "42px",
+      fontSize: isMobile ? "16px" : "16px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
