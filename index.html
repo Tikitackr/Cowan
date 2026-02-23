@@ -453,6 +453,38 @@ function CowanApp() {
     }
   }, [showModelHint]);
 
+  /* --- Global Keyboard Shortcuts --- */
+  useEffect(function () {
+    var handleGlobalKeyDown = function (e) {
+      if (e.key === "Escape") {
+        if (showTutorial) {
+          setShowTutorial(false);
+          return;
+        }
+        if (showExportMenu) {
+          setShowExportMenu(false);
+          return;
+        }
+        if (socialComingSoon) {
+          setSocialComingSoon("");
+          return;
+        }
+        if (xPanelOpen) {
+          setXPanelOpen(false);
+          return;
+        }
+        if (sourcePanelOpen) {
+          setSourcePanelOpen(false);
+          return;
+        }
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return function () {
+      document.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, [showTutorial, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
+
   /* --- API Key pruefen --- */
   var validateApiKey = function (key) {
     if (!key) {
