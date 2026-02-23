@@ -387,6 +387,12 @@ function CowanApp() {
   var _lobsterWiggle = useState(false);
   var lobsterWiggle = _lobsterWiggle[0];
   var setLobsterWiggle = _lobsterWiggle[1];
+
+  /* --- Bild/Kamera-Feature --- */
+  var _pendingImage = useState(null);
+  var pendingImage = _pendingImage[0];
+  var setPendingImage = _pendingImage[1];
+  var fileInputRef = useRef(null);
   var _showConfetti = useState(false);
   var showConfetti = _showConfetti[0];
   var setShowConfetti = _showConfetti[1];
@@ -594,9 +600,44 @@ function CowanApp() {
     });
   };
 
+  /* --- Bild-Handler --- */
+  var handleImageSelect = function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Bild zu gross (max. 5 MB). Bitte waehle ein kleineres Bild.");
+      return;
+    }
+    if (file.type.indexOf("image/") !== 0) {
+      setError("Nur Bilddateien sind erlaubt (JPG, PNG, GIF, WebP).");
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var dataUrl = ev.target.result;
+      var commaIdx = dataUrl.indexOf(",");
+      var base64 = dataUrl.slice(commaIdx + 1);
+      var mimeType = file.type || "image/jpeg";
+      setPendingImage({
+        base64: base64,
+        mimeType: mimeType,
+        fileName: file.name
+      });
+      setError("");
+    };
+    reader.readAsDataURL(file);
+    /* Input zuruecksetzen damit gleiche Datei nochmal waehlbar */
+    e.target.value = "";
+  };
+  var removeImage = function () {
+    setPendingImage(null);
+  };
+
   /* --- Nachricht senden --- */
   var sendMessage = function () {
-    if (!input.trim() || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
+    var hasText = input.trim().length > 0;
+    var hasImage = pendingImage !== null;
+    if (!hasText && !hasImage || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
     var userMessage = input.trim();
     setInput("");
     setError("");
@@ -604,18 +645,62 @@ function CowanApp() {
     if (lowerMsg.indexOf("hummer") !== -1 || lowerMsg.indexOf("lobster") !== -1 || lowerMsg.indexOf("openclaw") !== -1) {
       setLobsterWiggle(true);
     }
+
+    /* Bild-Daten fuer diesen Send erfassen und State leeren */
+    var imageForSend = pendingImage;
+    setPendingImage(null);
+
+    /* API content: Text oder multimodal (Bild + Text) */
+    var apiContent;
+    if (imageForSend) {
+      var contentBlocks = [];
+      contentBlocks.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: imageForSend.mimeType,
+          data: imageForSend.base64
+        }
+      });
+      contentBlocks.push({
+        type: "text",
+        text: userMessage || "Was siehst du auf diesem Bild? Beantworte auf Deutsch."
+      });
+      apiContent = contentBlocks;
+    } else {
+      apiContent = userMessage;
+    }
+
+    /* Chat-Nachricht fuer die lokale Anzeige (mit Bild-Vorschau) */
     var userMsg = {
       role: "user",
-      content: userMessage,
-      sourceIds: []
+      content: userMessage || "(Bild gesendet)",
+      sourceIds: [],
+      imageData: imageForSend
     };
     setMessages(function (prev) {
       return prev.concat([userMsg]);
     });
     setIsLoading(true);
+
+    /* API-Messages aufbauen: aeltere Bilder durch Text ersetzen */
     var apiMessages = messages.filter(function (m) {
       return !m.isWelcome;
-    }).concat([userMsg]).map(function (m) {
+    }).concat([{
+      role: "user",
+      content: apiContent
+    }]).map(function (m, idx, arr) {
+      if (idx === arr.length - 1) return {
+        role: m.role,
+        content: m.content
+      };
+      /* Aeltere Nachrichten: falls imageData vorhanden, nur Text senden */
+      if (m.imageData) {
+        return {
+          role: m.role,
+          content: m.content + " [Bild wurde gesendet]"
+        };
+      }
       return {
         role: m.role,
         content: m.content
@@ -623,9 +708,11 @@ function CowanApp() {
     });
     var trimmed = trimConversationHistory(apiMessages);
     var controller = new AbortController();
+    /* Vision-Requests brauchen laenger */
+    var timeoutMs = imageForSend ? 30000 : 10000;
     var timeout = setTimeout(function () {
       controller.abort();
-    }, 10000);
+    }, timeoutMs);
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -825,7 +912,7 @@ function CowanApp() {
   var handleExampleClick = function (question) {
     setInput(question);
   };
-  var canSend = input.trim() && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
+  var canSend = (input.trim() || pendingImage) && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
   var statusColors = {
     none: "#9ca3af",
     valid: "#22c55e",
@@ -1616,7 +1703,21 @@ function CowanApp() {
         color: theme.mutedText,
         marginBottom: "4px"
       }
-    }, isAssistant ? "Cowan" : "Du"), /*#__PURE__*/React.createElement("div", {
+    }, isAssistant ? "Cowan" : "Du"), !isAssistant && msg.imageData && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: "6px"
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: "data:" + msg.imageData.mimeType + ";base64," + msg.imageData.base64,
+      alt: "Gesendetes Bild",
+      style: {
+        maxWidth: isMobile ? "150px" : "200px",
+        maxHeight: isMobile ? "150px" : "200px",
+        borderRadius: "8px",
+        objectFit: "cover",
+        border: "1px solid " + theme.border
+      }
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         lineHeight: 1.6,
         wordBreak: "break-word",
@@ -1753,7 +1854,66 @@ function CowanApp() {
       fontSize: isMobile ? "10px" : "11px",
       color: darkMode ? "#eab308" : "#d97706"
     }
-  }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), pendingImage && /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid " + theme.border,
+      padding: isMobile ? "6px 8px" : "8px 16px",
+      backgroundColor: theme.cardBg,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, innerMax, {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px"
+    })
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "relative",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: "data:" + pendingImage.mimeType + ";base64," + pendingImage.base64,
+    alt: "Vorschau",
+    style: {
+      width: isMobile ? "50px" : "60px",
+      height: isMobile ? "50px" : "60px",
+      objectFit: "cover",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: removeImage,
+    style: {
+      position: "absolute",
+      top: "-6px",
+      right: "-6px",
+      width: "20px",
+      height: "20px",
+      borderRadius: "50%",
+      backgroundColor: "#ef4444",
+      color: "#fff",
+      border: "none",
+      fontSize: "12px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 0,
+      lineHeight: 1
+    }
+  }, "x")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "12px",
+      color: theme.mutedText,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", null, pendingImage.fileName), selectedModel === "claude-haiku-4-5-20251001" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#eab308",
+      marginTop: "2px"
+    }
+  }, "\uD83D\uDCF7 Sonnet empfohlen fuer bessere Bildanalyse")))), /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid " + theme.border,
       padding: isMobile ? "6px 8px" : "12px 16px",
@@ -1761,18 +1921,49 @@ function CowanApp() {
       flexShrink: 0,
       backgroundColor: theme.cardBg
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    capture: "environment",
+    ref: fileInputRef,
+    style: {
+      display: "none"
+    },
+    onChange: handleImageSelect
+  }), /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, innerMax, {
       display: "flex",
-      gap: "8px"
+      gap: "8px",
+      alignItems: "flex-end"
     })
-  }, /*#__PURE__*/React.createElement("textarea", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      if (fileInputRef.current) fileInputRef.current.click();
+    },
+    disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
+    title: isMobile ? "Foto aufnehmen" : "Bild hochladen",
+    style: {
+      background: "none",
+      border: "1px solid " + theme.border,
+      borderRadius: "8px",
+      color: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? theme.mutedText : theme.primary,
+      cursor: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "not-allowed" : "pointer",
+      padding: isMobile ? "8px" : "8px 10px",
+      minHeight: isMobile ? "40px" : "42px",
+      fontSize: isMobile ? "18px" : "16px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.4 : 1
+    }
+  }, "\uD83D\uDCF7"), /*#__PURE__*/React.createElement("textarea", {
     value: input,
     onChange: function (e) {
       setInput(e.target.value);
     },
     onKeyDown: handleKeyDown,
-    placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Zuerst API-Key eingeben..." : "Stelle deine Frage...",
+    placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Zuerst API-Key eingeben..." : pendingImage ? "Frage zum Bild (optional)..." : "Stelle deine Frage...",
     disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
     rows: 1,
     style: Object.assign({}, inputStyle, {
