@@ -1652,7 +1652,7 @@ export default function CowanApp() {
             value={input}
             onChange={function(e) { setInput(e.target.value); }}
             onKeyDown={handleKeyDown}
-            placeholder={apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Zuerst API-Key eingeben..." : (pendingImage ? "Frage zum Bild (optional)..." : "Stelle deine Frage...")}
+            placeholder={apiKeyStatus === "none" || apiKeyStatus === "invalid" ? (isMobile ? "API-Key eingeben..." : "Zuerst API-Key eingeben...") : (pendingImage ? (isMobile ? "Frage zum Bild..." : "Frage zum Bild (optional)...") : "Stelle deine Frage...")}
             disabled={apiKeyStatus === "none" || apiKeyStatus === "invalid"}
             rows={1}
             style={Object.assign({}, inputStyle, {
