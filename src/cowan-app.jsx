@@ -216,6 +216,8 @@ export default function CowanApp() {
   var viewportHeight = _viewportHeight[0];
   var setViewportHeight = _viewportHeight[1];
 
+  var inputAreaRef = useRef(null);
+
   useEffect(function() {
     var update = function() {
       setIsMobile(window.innerWidth < 640);
@@ -235,6 +237,15 @@ export default function CowanApp() {
       }
     };
   }, []);
+
+  /* iOS Keyboard Fix: Eingabefeld ins Sichtfeld scrollen wenn Tastatur aufklappt */
+  var handleInputFocus = function() {
+    if (isMobile && inputAreaRef.current) {
+      setTimeout(function() {
+        inputAreaRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 300);
+    }
+  };
 
   var _darkMode = useState(true);
   var darkMode = _darkMode[0];
@@ -856,7 +867,7 @@ export default function CowanApp() {
   }, [darkMode]);
 
   var containerStyle = {
-    height: isMobile ? (viewportHeight + "px") : "100vh",
+    height: isMobile ? "100dvh" : "100vh",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -865,9 +876,7 @@ export default function CowanApp() {
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontSize: "14px",
     transition: "background-color 0.3s, color 0.3s",
-    position: isMobile ? "fixed" : "relative",
-    top: isMobile ? 0 : "auto",
-    left: isMobile ? 0 : "auto",
+    position: "relative",
     width: "100%",
   };
 
@@ -1613,7 +1622,7 @@ export default function CowanApp() {
       )}
 
       {/* Eingabe */}
-      <div style={{
+      <div ref={inputAreaRef} style={{
         borderTop: "1px solid " + theme.border,
         padding: isMobile ? "6px 8px" : "12px 16px",
         paddingBottom: isMobile ? "calc(6px + env(safe-area-inset-bottom, 0px))" : "12px",
@@ -1652,6 +1661,7 @@ export default function CowanApp() {
             value={input}
             onChange={function(e) { setInput(e.target.value); }}
             onKeyDown={handleKeyDown}
+            onFocus={handleInputFocus}
             placeholder={apiKeyStatus === "none" || apiKeyStatus === "invalid" ? (isMobile ? "API-Key eingeben..." : "Zuerst API-Key eingeben...") : (pendingImage ? (isMobile ? "Frage zum Bild..." : "Frage zum Bild (optional)...") : "Stelle deine Frage...")}
             disabled={apiKeyStatus === "none" || apiKeyStatus === "invalid"}
             rows={1}
