@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Cowan – Die Buch-Instanz | Agentic Authorship</title>
   <meta name="description" content="KI-Wissensassistent fuer das Buch Agentic Authorship - Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>" />
@@ -37,17 +37,12 @@
   <div id="root"></div>
   <script>
 /* React Hooks aus globalem React-Objekt */
-const {
-  useState,
-  useRef,
-  useEffect,
-  useCallback
-} = React;
+const { useState, useRef, useEffect, useCallback } = React;
 
 /* ==========================================================
    Cowan – Die Buch-Instanz
    KI-Wissensassistent fuer "Agentic Authorship"
-   Phase 1 – Standalone React / GitHub Pages
+   Phase 1 – Standalone React Artifact
    ========================================================== */
 
 const PRICING = {
@@ -234,10 +229,15 @@ function renderMarkdown(text) {
 }
 function renderInline(text) {
   var h = escapeHtml(text);
+  // Links
   h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#0d9488;text-decoration:underline\">$1</a>");
+  // Fett
   h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  // Kursiv
   h = h.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  // Inline-Code
   h = h.replace(/`([^`]+)`/g, "<code style=\"background:#e2e8f0;color:#be185d;padding:1px 4px;border-radius:3px;font-size:13px\">$1</code>");
+  // Zeilenumbrueche
   h = h.replace(/\n/g, "<br/>");
   return h;
 }
@@ -250,6 +250,23 @@ function CowanApp() {
     isWelcome: true,
     sourceIds: []
   };
+
+  /* --- Mobile Detection --- */
+  var _isMobile = useState(typeof window !== "undefined" && window.innerWidth < 640);
+  var isMobile = _isMobile[0];
+  var setIsMobile = _isMobile[1];
+  var _showMobileMenu = useState(false);
+  var showMobileMenu = _showMobileMenu[0];
+  var setShowMobileMenu = _showMobileMenu[1];
+  useEffect(function () {
+    var handleResize = function () {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener("resize", handleResize);
+    return function () {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   var _darkMode = useState(true);
   var darkMode = _darkMode[0];
   var setDarkMode = _darkMode[1];
@@ -260,23 +277,23 @@ function CowanApp() {
   var tutorialStep = _tutorialStep[0];
   var setTutorialStep = _tutorialStep[1];
   var tutorialSteps = [{
-    icon: "\u{1F99E}",
+    icon: "🦞",
     title: "Willkommen bei Cowan!",
     text: "Ich bin dein KI-Wissensassistent zum Buch \"Agentic Authorship\". Ich kenne das Buch in- und auswendig und helfe dir bei Fragen zu OpenClaw, Claude, n8n und mehr."
   }, {
-    icon: "\u{1F511}",
+    icon: "🔑",
     title: "API-Key eingeben",
     text: "Um mit mir zu chatten, brauchst du einen Claude API-Key von console.anthropic.com. Trage ihn oben ein und klicke auf \"Pr\u00fcfen\". Keine Sorge, der Key bleibt nur in deinem Browser."
   }, {
-    icon: "\u{1F4AC}",
+    icon: "💬",
     title: "Frag mich etwas!",
     text: "Nutze die Beispielfragen oder tippe deine eigene Frage ein. Ich antworte basierend auf der Wissensbasis des Buches und zeige dir die verwendeten Quellen."
   }, {
-    icon: "\uD83D\uDCDA",
+    icon: "📚",
     title: "Wissensbasis entdecken",
-    text: "Klicke oben auf \"\uD83D\uDCDA Wissen\", um alle 8 Wissensbausteine des Buches zu durchbl\u00e4ttern \u2013 ganz ohne Frage zu stellen. So bekommst du einen \u00dcberblick \u00fcber alle Themen."
+    text: "Klicke oben auf \"📚 Wissen\", um alle 8 Wissensbausteine des Buches zu durchblättern – ganz ohne Frage zu stellen. So bekommst du einen Überblick über alle Themen."
   }, {
-    icon: "\u{1F426}",
+    icon: "🐦",
     title: "Kein Key? Frag auf X!",
     text: "Du kannst deine Frage auch direkt auf X (Twitter) stellen. Klicke auf \"Frag Cowan auf X\" und die Community hilft dir weiter."
   }];
@@ -443,7 +460,9 @@ function CowanApp() {
   }, [isTyping, typingIndex]);
   useEffect(function () {
     if (!showExportMenu) return;
-    var handleClickOutside = function () { setShowExportMenu(false); };
+    var handleClickOutside = function () {
+      setShowExportMenu(false);
+    };
     var t = setTimeout(function () {
       document.addEventListener("click", handleClickOutside);
     }, 0);
@@ -467,6 +486,10 @@ function CowanApp() {
   useEffect(function () {
     var handleGlobalKeyDown = function (e) {
       if (e.key === "Escape") {
+        if (showMobileMenu) {
+          setShowMobileMenu(false);
+          return;
+        }
         if (showTutorial) {
           setShowTutorial(false);
           return;
@@ -497,7 +520,7 @@ function CowanApp() {
     return function () {
       document.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [showTutorial, showChunkBrowser, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
+  }, [showMobileMenu, showTutorial, showChunkBrowser, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
 
   /* --- API Key pruefen --- */
   var validateApiKey = function (key) {
@@ -607,12 +630,12 @@ function CowanApp() {
           var status = response.status;
           var errText = "";
           if (status === 401) {
-            errText = "API-Key ung\u00fcltig oder abgelaufen. Pr\u00fcfe ihn unter console.anthropic.com/settings/keys";
+            errText = "API-Key ungültig oder abgelaufen. Prüfe ihn unter console.anthropic.com/settings/keys";
             setApiKeyStatus("invalid");
           } else if (status === 429) {
             errText = "Zu viele Anfragen - bitte kurz warten und erneut versuchen.";
           } else if (status >= 500) {
-            errText = "Claude-Server vor\u00fcbergehend nicht erreichbar. Bitte versuche es gleich nochmal.";
+            errText = "Claude-Server vorübergehend nicht erreichbar. Bitte versuche es gleich nochmal.";
           } else {
             errText = "Fehler (" + status + "): Bitte versuche es erneut.";
           }
@@ -655,13 +678,11 @@ function CowanApp() {
       });
     }).catch(function (err) {
       clearTimeout(timeout);
-      var errMsg = "";
       if (err && err.name === "AbortError") {
-        errMsg = "Zeit\u00fcberschreitung - die Anfrage hat zu lange gedauert. Bitte versuche es erneut.";
+        setError("Zeitüberschreitung - die Anfrage hat zu lange gedauert. Bitte versuche es erneut.");
       } else {
-        errMsg = "Keine Internetverbindung - bitte pr\u00fcfe deine Verbindung und versuche es erneut.";
+        setError("Keine Internetverbindung - bitte prüfe deine Verbindung und versuche es erneut.");
       }
-      setError(errMsg);
       setIsLoading(false);
     });
   };
@@ -703,9 +724,13 @@ function CowanApp() {
   };
 
   /* --- Export-Funktionen --- */
-  var exportableMessages = messages.filter(function (m) { return !m.isWelcome; });
+  var exportableMessages = messages.filter(function (m) {
+    return !m.isWelcome;
+  });
   var triggerDownload = function (content, filename, mimeType) {
-    var blob = new Blob([content], { type: mimeType });
+    var blob = new Blob([content], {
+      type: mimeType
+    });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
@@ -721,15 +746,26 @@ function CowanApp() {
       app: "Cowan - Die Buch-Instanz",
       exportedAt: new Date().toISOString(),
       model: PRICING[selectedModel].label,
-      tokens: { input: totalTokens.input, output: totalTokens.output, total: totalTokens.input + totalTokens.output },
+      tokens: {
+        input: totalTokens.input,
+        output: totalTokens.output,
+        total: totalTokens.input + totalTokens.output
+      },
       cost: "$" + totalCost.toFixed(4) + " USD",
       messages: exportableMessages.map(function (m) {
         return {
           role: m.role,
           content: m.content,
           sources: (m.sourceIds || []).map(function (id) {
-            var c = KNOWLEDGE_BASE.find(function (ch) { return ch.id === id; });
-            return c ? { id: id, title: c.title } : { id: id };
+            var c = KNOWLEDGE_BASE.find(function (ch) {
+              return ch.id === id;
+            });
+            return c ? {
+              id: id,
+              title: c.title
+            } : {
+              id: id
+            };
           })
         };
       })
@@ -753,7 +789,9 @@ function CowanApp() {
       lines.push(m.content);
       if (m.sourceIds && m.sourceIds.length > 0) {
         var names = m.sourceIds.map(function (id) {
-          var c = KNOWLEDGE_BASE.find(function (ch) { return ch.id === id; });
+          var c = KNOWLEDGE_BASE.find(function (ch) {
+            return ch.id === id;
+          });
           return c ? c.title : id;
         });
         lines.push("Quellen: " + names.join(", "));
@@ -763,7 +801,6 @@ function CowanApp() {
     var ts = new Date().toISOString().slice(0, 10);
     triggerDownload(lines.join("\n"), "cowan-chat-" + ts + ".txt", "text/plain");
   };
-
   var exampleQuestions = ["Was ist die SOUL.md?", "Wie starte ich OpenClaw?", "Welche Sub-Agenten gibt es?", "Wie funktioniert ein Masterprompt?"];
   var handleExampleClick = function (question) {
     setInput(question);
@@ -778,7 +815,7 @@ function CowanApp() {
   var statusLabels = {
     none: "Kein Key",
     valid: "Verbunden",
-    invalid: "Ung\u00fcltiger Key",
+    invalid: "Ungültiger Key",
     uncertain: "Key gespeichert"
   };
   var messageCount = messages.filter(function (m) {
@@ -865,35 +902,39 @@ function CowanApp() {
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: "24px",
+      fontSize: isMobile ? "20px" : "24px",
       display: "inline-block",
       animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none"
     }
-  }, "\u{1F99E}"), /*#__PURE__*/React.createElement("style", {
+  }, "\uD83E\uDD9E"), /*#__PURE__*/React.createElement("style", {
     dangerouslySetInnerHTML: {
       __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }"
     }
   }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
-      fontSize: "16px",
+      fontSize: isMobile ? "14px" : "16px",
       color: theme.primaryDark
     }
-  }, "Cowan - Die Buch-Instanz"), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: "11px",
       color: theme.mutedText
     }
-  }, "Agentic Authorship Wissensassistent"))), /*#__PURE__*/React.createElement("div", {
+  }, "Agentic Authorship Wissensassistent"))), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: "8px",
       alignItems: "center"
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: { position: "relative" }
+    style: {
+      position: "relative"
+    }
   }, /*#__PURE__*/React.createElement("button", {
-    onClick: function () { setShowExportMenu(!showExportMenu); },
+    onClick: function () {
+      setShowExportMenu(!showExportMenu);
+    },
     disabled: exportableMessages.length === 0,
     title: "Konversation exportieren",
     style: {
@@ -907,7 +948,7 @@ function CowanApp() {
       fontWeight: 600,
       opacity: exportableMessages.length > 0 ? 1 : 0.5
     }
-  }, "\u2B07 Export"), showExportMenu && /*#__PURE__*/React.createElement("div", {
+  }, "⬇ Export"), showExportMenu && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: "100%",
@@ -923,8 +964,6 @@ function CowanApp() {
     }
   }, /*#__PURE__*/React.createElement("button", {
     onClick: exportAsJson,
-    onMouseEnter: function (e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; },
-    onMouseLeave: function (e) { e.target.style.backgroundColor = "transparent"; },
     style: {
       display: "block",
       width: "100%",
@@ -936,11 +975,15 @@ function CowanApp() {
       cursor: "pointer",
       textAlign: "left",
       borderBottom: "1px solid " + theme.border
+    },
+    onMouseEnter: function (e) {
+      e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9";
+    },
+    onMouseLeave: function (e) {
+      e.target.style.backgroundColor = "transparent";
     }
-  }, "\uD83D\uDCC4 Als JSON speichern"), /*#__PURE__*/React.createElement("button", {
+  }, "📄 Als JSON speichern"), /*#__PURE__*/React.createElement("button", {
     onClick: exportAsText,
-    onMouseEnter: function (e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; },
-    onMouseLeave: function (e) { e.target.style.backgroundColor = "transparent"; },
     style: {
       display: "block",
       width: "100%",
@@ -951,10 +994,19 @@ function CowanApp() {
       fontSize: "13px",
       cursor: "pointer",
       textAlign: "left"
+    },
+    onMouseEnter: function (e) {
+      e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9";
+    },
+    onMouseLeave: function (e) {
+      e.target.style.backgroundColor = "transparent";
     }
-  }, "\uD83D\uDCDD Als Text speichern"))), /*#__PURE__*/React.createElement("button", {
-    onClick: function () { setChunkBrowserIndex(0); setShowChunkBrowser(true); },
-    title: "Wissensbasis durchbl\u00e4ttern",
+  }, "📝 Als Text speichern"))), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setChunkBrowserIndex(0);
+      setShowChunkBrowser(true);
+    },
+    title: "Wissensbasis durchbl\xE4ttern",
     style: {
       padding: "6px 12px",
       borderRadius: "8px",
@@ -965,7 +1017,7 @@ function CowanApp() {
       fontSize: "12px",
       fontWeight: 600
     }
-  }, "\uD83D\uDCDA Wissen"), /*#__PURE__*/React.createElement("button", {
+  }, "📚 Wissen"), /*#__PURE__*/React.createElement("button", {
     onClick: resetConversation,
     style: {
       padding: "6px 12px",
@@ -1005,21 +1057,201 @@ function CowanApp() {
       cursor: "pointer",
       fontSize: "16px"
     }
-  }, darkMode ? "\u2600\uFE0F" : "\u{1F319}"))), /*#__PURE__*/React.createElement("div", {
-    style: sectionStyle
+  }, darkMode ? "☀️" : "🌙")), isMobile && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "6px",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setDarkMode(!darkMode);
+    },
+    style: {
+      padding: "6px 8px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: theme.cardBg,
+      color: theme.text,
+      cursor: "pointer",
+      fontSize: "14px"
+    }
+  }, darkMode ? "☀️" : "🌙"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "relative"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setShowMobileMenu(!showMobileMenu);
+    },
+    style: {
+      padding: "6px 10px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: showMobileMenu ? theme.primary : theme.cardBg,
+      color: showMobileMenu ? "#ffffff" : theme.text,
+      cursor: "pointer",
+      fontSize: "16px",
+      fontWeight: 700,
+      lineHeight: 1
+    }
+  }, showMobileMenu ? "✕" : "☰"), showMobileMenu && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: "100%",
+      right: 0,
+      marginTop: "6px",
+      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+      border: "1px solid " + theme.border,
+      borderRadius: "12px",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+      zIndex: 200,
+      overflow: "hidden",
+      minWidth: "200px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setChunkBrowserIndex(0);
+      setShowChunkBrowser(true);
+      setShowMobileMenu(false);
+    },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border
+    }
+  }, "📚 Wissensbasis"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      resetConversation();
+      setShowMobileMenu(false);
+    },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border
+    }
+  }, "+ Neue Konversation"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      if (exportableMessages.length > 0) {
+        exportAsText();
+      }
+      setShowMobileMenu(false);
+    },
+    disabled: exportableMessages.length === 0,
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: exportableMessages.length > 0 ? theme.text : theme.mutedText,
+      fontSize: "14px",
+      cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border,
+      opacity: exportableMessages.length > 0 ? 1 : 0.5
+    }
+  }, "⬇ Export (Text)"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      if (exportableMessages.length > 0) {
+        exportAsJson();
+      }
+      setShowMobileMenu(false);
+    },
+    disabled: exportableMessages.length === 0,
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: exportableMessages.length > 0 ? theme.text : theme.mutedText,
+      fontSize: "14px",
+      cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border,
+      opacity: exportableMessages.length > 0 ? 1 : 0.5
+    }
+  }, "📄 Export (JSON)"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setSocialComingSoon("");
+      setXPanelOpen(!xPanelOpen);
+      setShowMobileMenu(false);
+    },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer",
+      textAlign: "left",
+      borderBottom: "1px solid " + theme.border
+    }
+  }, "🐦 Frag auf X"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setTutorialStep(0);
+      setShowTutorial(true);
+      setShowMobileMenu(false);
+    },
+    style: {
+      display: "block",
+      width: "100%",
+      padding: "14px 16px",
+      border: "none",
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer",
+      textAlign: "left"
+    }
+  }, "? Hilfe / Tutorial"))))), showMobileMenu && /*#__PURE__*/React.createElement("div", {
+    onClick: function () {
+      setShowMobileMenu(false);
+    },
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      zIndex: 150,
+      backgroundColor: "transparent"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, sectionStyle, isMobile ? {
+      padding: "10px 12px"
+    } : {})
   }, /*#__PURE__*/React.createElement("div", {
     style: innerMax
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
+      flexDirection: isMobile ? "column" : "row",
       flexWrap: "wrap",
-      gap: "12px",
-      alignItems: "flex-end"
+      gap: isMobile ? "8px" : "12px",
+      alignItems: isMobile ? "stretch" : "flex-end"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: "1 1 180px",
-      maxWidth: "320px"
+      maxWidth: isMobile ? "none" : "320px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1031,7 +1263,7 @@ function CowanApp() {
       alignItems: "center",
       gap: "8px"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u{1F511} API-Key"), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD11 API-Key"), /*#__PURE__*/React.createElement("span", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -1067,14 +1299,25 @@ function CowanApp() {
     },
     placeholder: "sk-ant-...",
     style: Object.assign({}, inputStyle, {
-      flex: 1
+      flex: 1,
+      fontSize: isMobile ? "16px" : "14px"
     })
   }), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       validateApiKey(apiKeyRef.current);
     },
     style: btnPrimary
-  }, "Pr\xFCfen"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? "OK" : "Prüfen"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "8px",
+      alignItems: "flex-end"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: isMobile ? 1 : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: "12px",
       fontWeight: 600,
@@ -1086,13 +1329,21 @@ function CowanApp() {
     onChange: handleModelChange,
     style: Object.assign({}, inputStyle, {
       flex: "none",
-      minWidth: "120px"
+      minWidth: "120px",
+      width: isMobile ? "100%" : "auto",
+      fontSize: isMobile ? "16px" : "14px"
     })
   }, /*#__PURE__*/React.createElement("option", {
     value: "claude-haiku-4-5-20251001"
   }, "Haiku 4.5"), /*#__PURE__*/React.createElement("option", {
     value: "claude-sonnet-4-5-20250929"
-  }, "Sonnet 4.5"))), /*#__PURE__*/React.createElement("div", {
+  }, "Sonnet 4.5"))), isMobile && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "11px",
+      color: theme.mutedText,
+      paddingBottom: "10px"
+    }
+  }, selectedModel === "claude-sonnet-4-5-20250929" ? "3-5x teurer" : "Günstig")), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       flex: "1 1 120px",
       fontSize: "11px",
@@ -1104,7 +1355,7 @@ function CowanApp() {
     style: {
       marginBottom: "2px"
     }
-  }, selectedModel === "claude-sonnet-4-5-20250929" ? "Sonnet: Detaillierter, 3-5x teurer" : "Haiku: Schnell & kosteng\u00fcnstig"), /*#__PURE__*/React.createElement("a", {
+  }, selectedModel === "claude-sonnet-4-5-20250929" ? "Sonnet: Detaillierter, 3-5x teurer" : "Haiku: Schnell & kostengünstig"), /*#__PURE__*/React.createElement("a", {
     href: "https://console.anthropic.com/settings/keys",
     target: "_blank",
     rel: "noopener noreferrer",
@@ -1117,9 +1368,23 @@ function CowanApp() {
     style: {
       fontSize: "11px",
       color: theme.mutedText,
-      marginTop: "6px"
+      marginTop: "6px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: "4px"
     }
-  }, "\u{1F512} Gib deinen Key nur auf Ger\u00e4ten ein, denen du vertraust."), showModelHint && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD12 Key bleibt nur in deinem Browser."), isMobile && /*#__PURE__*/React.createElement("a", {
+    href: "https://console.anthropic.com/settings/keys",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      color: theme.primary,
+      textDecoration: "underline",
+      fontSize: "11px"
+    }
+  }, "Key erstellen")), showModelHint && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: "8px",
       padding: "8px 12px",
@@ -1164,8 +1429,9 @@ function CowanApp() {
     style: {
       flex: 1,
       overflowY: "auto",
-      padding: "16px",
-      minHeight: 0
+      padding: isMobile ? "10px 8px" : "16px",
+      minHeight: 0,
+      WebkitOverflowScrolling: "touch"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: innerMax
@@ -1176,13 +1442,13 @@ function CowanApp() {
       style: {
         display: "flex",
         justifyContent: isAssistant ? "flex-start" : "flex-end",
-        marginBottom: "12px"
+        marginBottom: isMobile ? "8px" : "12px"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        maxWidth: "85%",
+        maxWidth: isMobile ? "95%" : "85%",
         borderRadius: "12px",
-        padding: "12px 16px",
+        padding: isMobile ? "10px 12px" : "12px 16px",
         backgroundColor: isAssistant ? theme.cowanBubble : theme.userBubble,
         border: "1px solid " + theme.border
       }
@@ -1190,14 +1456,14 @@ function CowanApp() {
       style: {
         display: "flex",
         alignItems: "flex-start",
-        gap: "8px"
+        gap: isMobile ? "6px" : "8px"
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: "18px",
+        fontSize: isMobile ? "16px" : "18px",
         flexShrink: 0
       }
-    }, isAssistant ? "\u{1F99E}" : "\u{1F464}"), /*#__PURE__*/React.createElement("div", {
+    }, isAssistant ? "🦞" : "👤"), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         minWidth: 0
@@ -1212,7 +1478,8 @@ function CowanApp() {
     }, isAssistant ? "Cowan" : "Du"), /*#__PURE__*/React.createElement("div", {
       style: {
         lineHeight: 1.6,
-        wordBreak: "break-word"
+        wordBreak: "break-word",
+        fontSize: isMobile ? "13px" : "14px"
       },
       dangerouslySetInnerHTML: {
         __html: renderMarkdown(msg.content)
@@ -1224,7 +1491,7 @@ function CowanApp() {
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
         gap: "8px"
       }
     }, exampleQuestions.map(function (q, qi) {
@@ -1254,7 +1521,7 @@ function CowanApp() {
         fontSize: "12px",
         color: theme.primary
       }
-    }, "\u{1F4DA} Quellen: " + msg.sourceIds.map(function (id) {
+    }, "📚 Quellen: " + msg.sourceIds.map(function (id) {
       var c = KNOWLEDGE_BASE.find(function (ch) {
         return ch.id === id;
       });
@@ -1288,7 +1555,7 @@ function CowanApp() {
     style: {
       fontSize: "18px"
     }
-  }, "\u{1F99E}"), /*#__PURE__*/React.createElement("span", {
+  }, "\uD83E\uDD9E"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: theme.mutedText,
       fontSize: "13px",
@@ -1341,14 +1608,15 @@ function CowanApp() {
   }))), messageCount >= 10 && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
-      padding: "4px 16px",
-      fontSize: "11px",
+      padding: isMobile ? "4px 8px" : "4px 16px",
+      fontSize: isMobile ? "10px" : "11px",
       color: darkMode ? "#eab308" : "#d97706"
     }
-  }, "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, sectionStyle, {
       borderBottom: "none",
-      borderTop: "1px solid " + theme.border
+      borderTop: "1px solid " + theme.border,
+      padding: isMobile ? "8px 8px" : "12px 16px"
     })
   }, /*#__PURE__*/React.createElement("div", {
     style: Object.assign({}, innerMax, {
@@ -1361,20 +1629,24 @@ function CowanApp() {
       setInput(e.target.value);
     },
     onKeyDown: handleKeyDown,
-    placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Bitte zuerst einen g\u00fcltigen API-Key eingeben..." : "Stelle deine Frage...",
+    placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Zuerst API-Key eingeben..." : "Stelle deine Frage...",
     disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
     rows: 1,
     style: Object.assign({}, inputStyle, {
       resize: "none",
-      minHeight: "42px",
+      minHeight: isMobile ? "44px" : "42px",
       maxHeight: "120px",
-      opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.5 : 1
+      opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.5 : 1,
+      fontSize: isMobile ? "16px" : "14px"
     })
   }), /*#__PURE__*/React.createElement("button", {
     onClick: sendMessage,
     disabled: !canSend,
-    style: canSend ? btnPrimary : btnDisabled
-  }, isLoading ? "..." : "Senden"))), /*#__PURE__*/React.createElement("div", {
+    style: Object.assign({}, canSend ? btnPrimary : btnDisabled, isMobile ? {
+      padding: "8px 14px",
+      minHeight: "44px"
+    } : {})
+  }, isLoading ? "..." : isMobile ? "➤" : "Senden"))), /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid " + theme.border,
       flexShrink: 0
@@ -1398,7 +1670,7 @@ function CowanApp() {
       fontSize: "13px",
       fontWeight: 600
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u{1F4CA} Verwendete Quellen" + (lastSources.length > 0 ? " (" + lastSources.length + ")" : "")), /*#__PURE__*/React.createElement("span", null, sourcePanelOpen ? "\u25BE" : "\u25B8")), sourcePanelOpen && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "📊 Verwendete Quellen" + (lastSources.length > 0 ? " (" + lastSources.length + ")" : "")), /*#__PURE__*/React.createElement("span", null, sourcePanelOpen ? "▾" : "▸")), sourcePanelOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "0 16px 12px"
     }
@@ -1417,7 +1689,7 @@ function CowanApp() {
         fontSize: "12px",
         color: theme.mutedText
       }
-    }, "Unbekannt: " + id);
+    }, "Unbekannt: ", id);
     var isExpanded = expandedChunks[id];
     return /*#__PURE__*/React.createElement("div", {
       key: id,
@@ -1452,7 +1724,7 @@ function CowanApp() {
         color: theme.primary,
         fontSize: "11px"
       }
-    }, chunk.category)), /*#__PURE__*/React.createElement("span", null, isExpanded ? "\u25BE" : "\u25B8")), isExpanded && /*#__PURE__*/React.createElement("div", {
+    }, chunk.category)), /*#__PURE__*/React.createElement("span", null, isExpanded ? "▾" : "▸")), isExpanded && /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "0 12px 12px",
         fontSize: "12px",
@@ -1474,12 +1746,12 @@ function CowanApp() {
       style: {
         marginTop: "8px"
       }
-    }, "\u{1F4D6} Quelle: " + chunk.source)));
+    }, "📖 Quelle: " + chunk.source)));
   })))), /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid " + theme.border,
       backgroundColor: theme.cardBg,
-      padding: "8px 16px",
+      padding: isMobile ? "6px 8px" : "8px 16px",
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1488,16 +1760,17 @@ function CowanApp() {
       flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
-      gap: "8px"
+      gap: isMobile ? "4px" : "8px"
     })
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: "16px",
-      fontSize: "12px",
-      color: theme.mutedText
+      gap: isMobile ? "8px" : "16px",
+      fontSize: isMobile ? "10px" : "12px",
+      color: theme.mutedText,
+      flexWrap: "wrap"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "Kosten: $" + totalCost.toFixed(4) + " USD"), /*#__PURE__*/React.createElement("span", null, "Modell: " + PRICING[selectedModel].label)), /*#__PURE__*/React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("span", null, "Tokens: ", (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /*#__PURE__*/React.createElement("span", null, "$" + totalCost.toFixed(4)), /*#__PURE__*/React.createElement("span", null, PRICING[selectedModel].label)), !isMobile && /*#__PURE__*/React.createElement("a", {
     href: "https://docs.anthropic.com/en/docs/about-claude/pricing",
     target: "_blank",
     rel: "noopener noreferrer",
@@ -1506,20 +1779,20 @@ function CowanApp() {
       fontSize: "10px",
       textDecoration: "underline"
     }
-  }, "Aktuelle Preise")), /*#__PURE__*/React.createElement("div", {
+  }, "Aktuelle Preise")), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: "10px",
       color: theme.mutedText,
       marginTop: "4px"
     }
-  }, "Ein unabh\u00e4ngiger Leitfaden. Claude ist eine Marke von Anthropic PBC, n8n ist eine Marke der n8n GmbH.")), /*#__PURE__*/React.createElement("div", {
+  }, "Ein unabh\xE4ngiger Leitfaden. Claude ist eine Marke von Anthropic PBC, n8n ist eine Marke der n8n GmbH.")), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       right: xPanelOpen ? "308px" : "8px",
       top: "50%",
       transform: "translateY(-50%)",
-      display: "flex",
+      display: isMobile ? "none" : "flex",
       flexDirection: "column",
       gap: "8px",
       zIndex: 10001,
@@ -1555,7 +1828,7 @@ function CowanApp() {
       setXPanelOpen(false);
       setSocialComingSoon(socialComingSoon === "wa" ? "" : "wa");
     },
-    title: "WhatsApp (bald verf\\u00fcgbar)",
+    title: "WhatsApp (bald verf\xFCgbar)",
     style: {
       width: "44px",
       height: "44px",
@@ -1584,7 +1857,7 @@ function CowanApp() {
       setXPanelOpen(false);
       setSocialComingSoon(socialComingSoon === "tg" ? "" : "tg");
     },
-    title: "Telegram (bald verf\\u00fcgbar)",
+    title: "Telegram (bald verf\xFCgbar)",
     style: {
       width: "44px",
       height: "44px",
@@ -1606,7 +1879,7 @@ function CowanApp() {
     fill: "#ffffff"
   }, /*#__PURE__*/React.createElement("path", {
     d: "M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"
-  })))), socialComingSoon && /*#__PURE__*/React.createElement("div", {
+  })))), socialComingSoon && !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       right: "40px",
@@ -1626,7 +1899,7 @@ function CowanApp() {
       fontSize: "28px",
       marginBottom: "8px"
     }
-  }, socialComingSoon === "wa" ? "\u{1F4AC}" : "\u2708\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, socialComingSoon === "wa" ? "💬" : "✈️"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: "14px",
       fontWeight: 700,
@@ -1639,7 +1912,7 @@ function CowanApp() {
       color: theme.mutedText,
       lineHeight: 1.5
     }
-  }, "Demn\u00e4chst verf\u00fcgbar! Hier kannst du bald deine Fragen direkt per " + (socialComingSoon === "wa" ? "WhatsApp" : "Telegram") + " stellen."), /*#__PURE__*/React.createElement("button", {
+  }, "Demnächst verfügbar! Hier kannst du bald deine Fragen direkt per " + (socialComingSoon === "wa" ? "WhatsApp" : "Telegram") + " stellen."), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setSocialComingSoon("");
     },
@@ -1656,12 +1929,12 @@ function CowanApp() {
   }, "OK")), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
-      right: xPanelOpen ? "0px" : "-300px",
+      right: xPanelOpen ? "0px" : isMobile ? "-100%" : "-300px",
       top: 0,
-      width: "300px",
+      width: isMobile ? "100%" : "300px",
       height: "100%",
       backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-      borderLeft: "1px solid " + theme.border,
+      borderLeft: isMobile ? "none" : "1px solid " + theme.border,
       zIndex: 10000,
       display: "flex",
       flexDirection: "column",
@@ -1759,17 +2032,17 @@ function CowanApp() {
       height: "100%",
       backgroundColor: "rgba(0,0,0,0.6)",
       display: "flex",
-      alignItems: "center",
+      alignItems: isMobile ? "flex-end" : "center",
       justifyContent: "center",
       zIndex: 10000
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-      borderRadius: "16px",
-      padding: "32px",
+      borderRadius: isMobile ? "16px 16px 0 0" : "16px",
+      padding: isMobile ? "24px 20px" : "32px",
       maxWidth: "400px",
-      width: "90%",
+      width: isMobile ? "100%" : "90%",
       textAlign: "center",
       border: "1px solid " + theme.border
     }
@@ -1828,7 +2101,7 @@ function CowanApp() {
       fontSize: "14px",
       cursor: "pointer"
     }
-  }, "Zur\u00fcck"), /*#__PURE__*/React.createElement("button", {
+  }, "Zurück"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       if (tutorialStep < tutorialSteps.length - 1) {
         setTutorialStep(tutorialStep + 1);
@@ -1846,10 +2119,7 @@ function CowanApp() {
       fontWeight: 600,
       cursor: "pointer"
     }
-  }, tutorialStep < tutorialSteps.length - 1 ? "Weiter" : "Los geht's!")))),
-
-  /* Chunk-Browser Modal */
-  showChunkBrowser && /*#__PURE__*/React.createElement("div", {
+  }, tutorialStep < tutorialSteps.length - 1 ? "Weiter" : "Los geht's!")))), showChunkBrowser && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       top: 0,
@@ -1858,74 +2128,152 @@ function CowanApp() {
       height: "100%",
       backgroundColor: "rgba(0,0,0,0.6)",
       display: "flex",
-      alignItems: "center",
+      alignItems: isMobile ? "flex-end" : "center",
       justifyContent: "center",
       zIndex: 10000
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-      borderRadius: "16px",
-      padding: "32px",
+      borderRadius: isMobile ? "16px 16px 0 0" : "16px",
+      padding: isMobile ? "20px 16px" : "32px",
       maxWidth: "600px",
-      width: "90%",
-      maxHeight: "80vh",
+      width: isMobile ? "100%" : "90%",
+      maxHeight: isMobile ? "85vh" : "80vh",
       display: "flex",
       flexDirection: "column",
       border: "1px solid " + theme.border
     }
-  },
-  /* Header */
-  /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexShrink: 0 }
   }, /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: "18px", fontWeight: 700, color: theme.text }
-  }, "\uD83D\uDCDA Wissensbasis"), /*#__PURE__*/React.createElement("button", {
-    onClick: function () { setShowChunkBrowser(false); },
-    style: { background: "none", border: "none", color: theme.mutedText, fontSize: "18px", cursor: "pointer", fontWeight: 700 }
-  }, "x")),
-  /* Chunk-Inhalt */
-  /*#__PURE__*/React.createElement("div", {
-    style: { flex: 1, overflowY: "auto", marginBottom: "16px" }
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "16px",
+      flexShrink: 0
+    }
   }, /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }
+    style: {
+      fontSize: "18px",
+      fontWeight: 700,
+      color: theme.text
+    }
+  }, "📚 Wissensbasis"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setShowChunkBrowser(false);
+    },
+    style: {
+      background: "none",
+      border: "none",
+      color: theme.mutedText,
+      fontSize: "18px",
+      cursor: "pointer",
+      fontWeight: 700
+    }
+  }, "x")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      marginBottom: "16px"
+    }
   }, /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: "16px", fontWeight: 700, color: theme.text }
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      marginBottom: "8px",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "16px",
+      fontWeight: 700,
+      color: theme.text
+    }
   }, KNOWLEDGE_BASE[chunkBrowserIndex].title), /*#__PURE__*/React.createElement("span", {
-    style: { padding: "2px 8px", borderRadius: "12px", backgroundColor: darkMode ? "#134e4a" : "#ccfbf1", color: theme.primary, fontSize: "11px", fontWeight: 600 }
+    style: {
+      padding: "2px 8px",
+      borderRadius: "12px",
+      backgroundColor: darkMode ? "#134e4a" : "#ccfbf1",
+      color: theme.primary,
+      fontSize: "11px",
+      fontWeight: 600
+    }
   }, KNOWLEDGE_BASE[chunkBrowserIndex].category), /*#__PURE__*/React.createElement("span", {
-    style: { padding: "2px 8px", borderRadius: "12px", backgroundColor: darkMode ? "#1e1b4b" : "#e0e7ff", color: darkMode ? "#a5b4fc" : "#4338ca", fontSize: "11px", fontWeight: 600 }
+    style: {
+      padding: "2px 8px",
+      borderRadius: "12px",
+      backgroundColor: darkMode ? "#1e1b4b" : "#e0e7ff",
+      color: darkMode ? "#a5b4fc" : "#4338ca",
+      fontSize: "11px",
+      fontWeight: 600
+    }
   }, KNOWLEDGE_BASE[chunkBrowserIndex].difficulty)), /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: "13px", fontStyle: "italic", color: theme.mutedText, marginBottom: "12px", lineHeight: 1.5 }
+    style: {
+      fontSize: "13px",
+      fontStyle: "italic",
+      color: theme.mutedText,
+      marginBottom: "12px",
+      lineHeight: 1.5
+    }
   }, KNOWLEDGE_BASE[chunkBrowserIndex].summary), /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: "13px", lineHeight: 1.7, color: theme.text },
-    dangerouslySetInnerHTML: { __html: renderMarkdown(KNOWLEDGE_BASE[chunkBrowserIndex].content) }
+    style: {
+      fontSize: "13px",
+      lineHeight: 1.7,
+      color: theme.text
+    },
+    dangerouslySetInnerHTML: {
+      __html: renderMarkdown(KNOWLEDGE_BASE[chunkBrowserIndex].content)
+    }
   }), /*#__PURE__*/React.createElement("div", {
-    style: { marginTop: "12px", fontSize: "11px", color: theme.mutedText }
-  }, "\uD83D\uDCD6 " + KNOWLEDGE_BASE[chunkBrowserIndex].source)),
-  /* Dot-Navigation */
-  /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", justifyContent: "center", gap: "6px", marginBottom: "16px", flexShrink: 0 }
+    style: {
+      marginTop: "12px",
+      fontSize: "11px",
+      color: theme.mutedText
+    }
+  }, "📖 " + KNOWLEDGE_BASE[chunkBrowserIndex].source)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "center",
+      gap: "6px",
+      marginBottom: "16px",
+      flexShrink: 0
+    }
   }, KNOWLEDGE_BASE.map(function (_, ci) {
     return /*#__PURE__*/React.createElement("div", {
       key: ci,
-      onClick: function () { setChunkBrowserIndex(ci); },
+      onClick: function () {
+        setChunkBrowserIndex(ci);
+      },
       style: {
         width: "8px",
         height: "8px",
         borderRadius: "50%",
-        backgroundColor: ci === chunkBrowserIndex ? theme.primary : (darkMode ? "#334155" : "#e2e8f0"),
+        backgroundColor: ci === chunkBrowserIndex ? theme.primary : darkMode ? "#334155" : "#e2e8f0",
         cursor: "pointer"
       }
     });
-  })),
-  /* Vor/Zur\u00fcck Buttons */
-  /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", gap: "8px", justifyContent: "center", flexShrink: 0 }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: "8px",
+      justifyContent: "center",
+      flexShrink: 0
+    }
   }, chunkBrowserIndex > 0 && /*#__PURE__*/React.createElement("button", {
-    onClick: function () { setChunkBrowserIndex(chunkBrowserIndex - 1); },
-    style: { padding: "10px 20px", borderRadius: "8px", border: "1px solid " + theme.border, backgroundColor: "transparent", color: theme.text, fontSize: "14px", cursor: "pointer" }
-  }, "\u2190 Zur\u00fcck"), /*#__PURE__*/React.createElement("button", {
+    onClick: function () {
+      setChunkBrowserIndex(chunkBrowserIndex - 1);
+    },
+    style: {
+      padding: "10px 20px",
+      borderRadius: "8px",
+      border: "1px solid " + theme.border,
+      backgroundColor: "transparent",
+      color: theme.text,
+      fontSize: "14px",
+      cursor: "pointer"
+    }
+  }, "← Zurück"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       if (chunkBrowserIndex < KNOWLEDGE_BASE.length - 1) {
         setChunkBrowserIndex(chunkBrowserIndex + 1);
@@ -1933,14 +2281,24 @@ function CowanApp() {
         setShowChunkBrowser(false);
       }
     },
-    style: { padding: "10px 20px", borderRadius: "8px", border: "none", backgroundColor: theme.primary, color: "#ffffff", fontSize: "14px", fontWeight: 600, cursor: "pointer" }
-  }, chunkBrowserIndex < KNOWLEDGE_BASE.length - 1 ? "Weiter \u2192" : "Schlie\u00dfen")),
-  /* Z\u00e4hler */
-  /*#__PURE__*/React.createElement("div", {
-    style: { textAlign: "center", fontSize: "11px", color: theme.mutedText, marginTop: "8px" }
-  }, (chunkBrowserIndex + 1) + " / " + KNOWLEDGE_BASE.length + " Wissensbausteine"))),
-
-  showConfetti && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 20px",
+      borderRadius: "8px",
+      border: "none",
+      backgroundColor: theme.primary,
+      color: "#ffffff",
+      fontSize: "14px",
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, chunkBrowserIndex < KNOWLEDGE_BASE.length - 1 ? "Weiter →" : "Schließen")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      fontSize: "11px",
+      color: theme.mutedText,
+      marginTop: "8px"
+    }
+  }, chunkBrowserIndex + 1 + " / " + KNOWLEDGE_BASE.length + " Wissensbausteine"))), showConfetti && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       top: 0,
@@ -1978,21 +2336,16 @@ function CowanApp() {
   })));
 }
 
-/* --- App rendern & Loading Screen ausblenden --- */
+/* --- App rendern --- */
 var root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(/*#__PURE__*/React.createElement(CowanApp, null));
-
-/* Loading-Screen nach Render ausblenden */
-setTimeout(function () {
-  var loadingEl = document.getElementById("loading");
-  if (loadingEl) {
-    loadingEl.classList.add("fade-out");
-    setTimeout(function () {
-      loadingEl.remove();
-    }, 500);
+root.render(React.createElement(CowanApp));
+setTimeout(function() {
+  var loader = document.getElementById("loading");
+  if (loader) {
+    loader.classList.add("fade-out");
+    setTimeout(function() { loader.remove(); }, 500);
   }
 }, 300);
-
   </script>
 </body>
 </html>
