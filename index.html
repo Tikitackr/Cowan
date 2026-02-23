@@ -289,12 +289,19 @@ function CowanApp() {
   /* iOS Keyboard Fix: Eingabefeld ins Sichtfeld scrollen wenn Tastatur aufklappt */
   var handleInputFocus = function () {
     if (isMobile && inputAreaRef.current) {
+      /* Mehrfach scrollen: iOS Keyboard-Animation dauert ~400ms */
       setTimeout(function () {
         inputAreaRef.current.scrollIntoView({
           behavior: "smooth",
-          block: "end"
+          block: "center"
         });
-      }, 300);
+      }, 150);
+      setTimeout(function () {
+        inputAreaRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }, 400);
     }
   };
   var _darkMode = useState(true);
