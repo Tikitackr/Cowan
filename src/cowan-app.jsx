@@ -199,6 +199,43 @@ export default function CowanApp() {
     sourceIds: [],
   };
 
+  /* --- Mobile Detection --- */
+  var _isMobile = useState(typeof window !== "undefined" && window.innerWidth < 640);
+  var isMobile = _isMobile[0];
+  var setIsMobile = _isMobile[1];
+
+  var _showMobileMenu = useState(false);
+  var showMobileMenu = _showMobileMenu[0];
+  var setShowMobileMenu = _showMobileMenu[1];
+
+  var _apiKeyCollapsed = useState(false);
+  var apiKeyCollapsed = _apiKeyCollapsed[0];
+  var setApiKeyCollapsed = _apiKeyCollapsed[1];
+
+  var _viewportHeight = useState(typeof window !== "undefined" ? window.innerHeight : 800);
+  var viewportHeight = _viewportHeight[0];
+  var setViewportHeight = _viewportHeight[1];
+
+  useEffect(function() {
+    var update = function() {
+      setIsMobile(window.innerWidth < 640);
+      /* visualViewport gibt die tatsaechlich sichtbare Hoehe (ohne Safari-Toolbar) */
+      var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      setViewportHeight(vh);
+    };
+    update();
+    window.addEventListener("resize", update);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", update);
+    }
+    return function() {
+      window.removeEventListener("resize", update);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", update);
+      }
+    };
+  }, []);
+
   var _darkMode = useState(true);
   var darkMode = _darkMode[0];
   var setDarkMode = _darkMode[1];
@@ -330,6 +367,13 @@ export default function CowanApp() {
   var lobsterWiggle = _lobsterWiggle[0];
   var setLobsterWiggle = _lobsterWiggle[1];
 
+  /* --- Bild/Kamera-Feature --- */
+  var _pendingImage = useState(null);
+  var pendingImage = _pendingImage[0];
+  var setPendingImage = _pendingImage[1];
+
+  var fileInputRef = useRef(null);
+
   var _showConfetti = useState(false);
   var showConfetti = _showConfetti[0];
   var setShowConfetti = _showConfetti[1];
@@ -427,6 +471,10 @@ export default function CowanApp() {
   useEffect(function() {
     var handleGlobalKeyDown = function(e) {
       if (e.key === "Escape") {
+        if (showMobileMenu) {
+          setShowMobileMenu(false);
+          return;
+        }
         if (showTutorial) {
           setShowTutorial(false);
           return;
@@ -457,7 +505,7 @@ export default function CowanApp() {
     return function() {
       document.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [showTutorial, showChunkBrowser, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
+  }, [showMobileMenu, showTutorial, showChunkBrowser, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
 
   /* --- API Key pruefen --- */
   var validateApiKey = function(key) {
@@ -491,6 +539,7 @@ export default function CowanApp() {
       clearTimeout(timeout);
       if (response.ok) {
         setApiKeyStatus("valid");
+        if (isMobile) { setApiKeyCollapsed(true); }
         if (!hasConfettiedRef.current) {
           hasConfettiedRef.current = true;
           setShowConfetti(true);
@@ -506,9 +555,41 @@ export default function CowanApp() {
     });
   };
 
+  /* --- Bild-Handler --- */
+  var handleImageSelect = function(e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Bild zu gross (max. 5 MB). Bitte waehle ein kleineres Bild.");
+      return;
+    }
+    if (file.type.indexOf("image/") !== 0) {
+      setError("Nur Bilddateien sind erlaubt (JPG, PNG, GIF, WebP).");
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var dataUrl = ev.target.result;
+      var commaIdx = dataUrl.indexOf(",");
+      var base64 = dataUrl.slice(commaIdx + 1);
+      var mimeType = file.type || "image/jpeg";
+      setPendingImage({ base64: base64, mimeType: mimeType, fileName: file.name });
+      setError("");
+    };
+    reader.readAsDataURL(file);
+    /* Input zuruecksetzen damit gleiche Datei nochmal waehlbar */
+    e.target.value = "";
+  };
+
+  var removeImage = function() {
+    setPendingImage(null);
+  };
+
   /* --- Nachricht senden --- */
   var sendMessage = function() {
-    if (!input.trim() || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
+    var hasText = input.trim().length > 0;
+    var hasImage = pendingImage !== null;
+    if ((!hasText && !hasImage) || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
     var userMessage = input.trim();
     setInput("");
     setError("");
@@ -518,17 +599,47 @@ export default function CowanApp() {
       setLobsterWiggle(true);
     }
 
-    var userMsg = { role: "user", content: userMessage, sourceIds: [] };
+    /* Bild-Daten fuer diesen Send erfassen und State leeren */
+    var imageForSend = pendingImage;
+    setPendingImage(null);
+
+    /* API content: Text oder multimodal (Bild + Text) */
+    var apiContent;
+    if (imageForSend) {
+      var contentBlocks = [];
+      contentBlocks.push({
+        type: "image",
+        source: { type: "base64", media_type: imageForSend.mimeType, data: imageForSend.base64 }
+      });
+      contentBlocks.push({
+        type: "text",
+        text: userMessage || "Was siehst du auf diesem Bild? Beantworte auf Deutsch."
+      });
+      apiContent = contentBlocks;
+    } else {
+      apiContent = userMessage;
+    }
+
+    /* Chat-Nachricht fuer die lokale Anzeige (mit Bild-Vorschau) */
+    var userMsg = { role: "user", content: userMessage || "(Bild gesendet)", sourceIds: [], imageData: imageForSend };
     setMessages(function(prev) { return prev.concat([userMsg]); });
     setIsLoading(true);
 
-    var apiMessages = messages.filter(function(m) { return !m.isWelcome; }).concat([userMsg]).map(function(m) {
+    /* API-Messages aufbauen: aeltere Bilder durch Text ersetzen */
+    var apiMessages = messages.filter(function(m) { return !m.isWelcome; }).concat([{ role: "user", content: apiContent }]).map(function(m, idx, arr) {
+      if (idx === arr.length - 1) return { role: m.role, content: m.content };
+      /* Aeltere Nachrichten: falls imageData vorhanden, nur Text senden */
+      if (m.imageData) {
+        return { role: m.role, content: m.content + " [Bild wurde gesendet]" };
+      }
       return { role: m.role, content: m.content };
     });
     var trimmed = trimConversationHistory(apiMessages);
 
     var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 10000);
+    /* Vision-Requests brauchen laenger */
+    var timeoutMs = imageForSend ? 30000 : 10000;
+    var timeout = setTimeout(function() { controller.abort(); }, timeoutMs);
 
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -716,7 +827,7 @@ export default function CowanApp() {
     setInput(question);
   };
 
-  var canSend = input.trim() && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
+  var canSend = (input.trim() || pendingImage) && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
 
   var statusColors = { none: "#9ca3af", valid: "#22c55e", invalid: "#ef4444", uncertain: "#eab308" };
   var statusLabels = { none: "Kein Key", valid: "Verbunden", invalid: "Ungültiger Key", uncertain: "Key gespeichert" };
@@ -738,8 +849,14 @@ export default function CowanApp() {
     primaryDark: "#0f766e",
   };
 
+  /* Body-Hintergrund setzen damit bei iOS Keyboard kein weisser Hintergrund durchscheint */
+  useEffect(function() {
+    document.body.style.backgroundColor = darkMode ? "#0f172a" : "#f8fafc";
+    document.documentElement.style.backgroundColor = darkMode ? "#0f172a" : "#f8fafc";
+  }, [darkMode]);
+
   var containerStyle = {
-    height: "100vh",
+    height: isMobile ? (viewportHeight + "px") : "100vh",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -748,13 +865,18 @@ export default function CowanApp() {
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontSize: "14px",
     transition: "background-color 0.3s, color 0.3s",
+    position: isMobile ? "fixed" : "relative",
+    top: isMobile ? 0 : "auto",
+    left: isMobile ? 0 : "auto",
+    width: "100%",
   };
 
   var headerStyle = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "12px 16px",
+    padding: isMobile ? "8px 10px" : "12px 16px",
+    paddingTop: isMobile ? "calc(8px + env(safe-area-inset-top, 0px))" : "12px",
     borderBottom: "1px solid " + theme.border,
     backgroundColor: theme.cardBg,
     flexShrink: 0,
@@ -801,218 +923,497 @@ export default function CowanApp() {
       {/* Header */}
       <div style={headerStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "24px", display: "inline-block", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }}>🦞</span>
+          <span style={{ fontSize: isMobile ? "20px" : "24px", display: "inline-block", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }}>🦞</span>
           <style dangerouslySetInnerHTML={{ __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }" }} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: "16px", color: theme.primaryDark }}>
-              Cowan - Die Buch-Instanz
+            <div style={{ fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: theme.primaryDark }}>
+              {isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"}
             </div>
-            <div style={{ fontSize: "11px", color: theme.mutedText }}>
-              Agentic Authorship Wissensassistent
-            </div>
+            {!isMobile && (
+              <div style={{ fontSize: "11px", color: theme.mutedText }}>
+                Agentic Authorship Wissensassistent
+              </div>
+            )}
           </div>
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <div style={{ position: "relative" }}>
+        {/* Desktop: alle Buttons sichtbar */}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={function() { setShowExportMenu(!showExportMenu); }}
+                disabled={exportableMessages.length === 0}
+                title="Konversation exportieren"
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid " + theme.border,
+                  backgroundColor: theme.cardBg,
+                  color: exportableMessages.length > 0 ? theme.primary : theme.mutedText,
+                  cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  opacity: exportableMessages.length > 0 ? 1 : 0.5,
+                }}
+              >
+                {"⬇ Export"}
+              </button>
+              {showExportMenu && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "4px",
+                  backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+                  border: "1px solid " + theme.border,
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  zIndex: 100,
+                  overflow: "hidden",
+                  minWidth: "160px",
+                }}>
+                  <button
+                    onClick={exportAsJson}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "10px 14px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                    }}
+                    onMouseEnter={function(e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; }}
+                    onMouseLeave={function(e) { e.target.style.backgroundColor = "transparent"; }}
+                  >
+                    {"📄 Als JSON speichern"}
+                  </button>
+                  <button
+                    onClick={exportAsText}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "10px 14px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={function(e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; }}
+                    onMouseLeave={function(e) { e.target.style.backgroundColor = "transparent"; }}
+                  >
+                    {"📝 Als Text speichern"}
+                  </button>
+                </div>
+              )}
+            </div>
             <button
-              onClick={function() { setShowExportMenu(!showExportMenu); }}
-              disabled={exportableMessages.length === 0}
-              title="Konversation exportieren"
+              onClick={function() { setChunkBrowserIndex(0); setShowChunkBrowser(true); }}
+              title="Wissensbasis durchblättern"
               style={{
                 padding: "6px 12px",
                 borderRadius: "8px",
                 border: "1px solid " + theme.border,
                 backgroundColor: theme.cardBg,
-                color: exportableMessages.length > 0 ? theme.primary : theme.mutedText,
-                cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+                color: theme.primary,
+                cursor: "pointer",
                 fontSize: "12px",
                 fontWeight: 600,
-                opacity: exportableMessages.length > 0 ? 1 : 0.5,
               }}
             >
-              {"⬇ Export"}
+              {"📚 Wissen"}
             </button>
-            {showExportMenu && (
-              <div style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                marginTop: "4px",
-                backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                border: "1px solid " + theme.border,
+            <button
+              onClick={resetConversation}
+              style={{
+                padding: "6px 12px",
                 borderRadius: "8px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                zIndex: 100,
-                overflow: "hidden",
-                minWidth: "160px",
-              }}>
-                <button
-                  onClick={exportAsJson}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px 14px",
-                    border: "none",
-                    backgroundColor: "transparent",
-                    color: theme.text,
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    borderBottom: "1px solid " + theme.border,
-                  }}
-                  onMouseEnter={function(e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; }}
-                  onMouseLeave={function(e) { e.target.style.backgroundColor = "transparent"; }}
-                >
-                  {"📄 Als JSON speichern"}
-                </button>
-                <button
-                  onClick={exportAsText}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px 14px",
-                    border: "none",
-                    backgroundColor: "transparent",
-                    color: theme.text,
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={function(e) { e.target.style.backgroundColor = darkMode ? "#334155" : "#f1f5f9"; }}
-                  onMouseLeave={function(e) { e.target.style.backgroundColor = "transparent"; }}
-                >
-                  {"📝 Als Text speichern"}
-                </button>
-              </div>
-            )}
+                border: "1px solid " + theme.border,
+                backgroundColor: theme.cardBg,
+                color: theme.primary,
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: 600,
+              }}
+            >
+              + Neue Konversation
+            </button>
+            <button
+              onClick={function() { setTutorialStep(0); setShowTutorial(true); }}
+              style={{
+                padding: "6px 10px",
+                borderRadius: "8px",
+                border: "1px solid " + theme.border,
+                backgroundColor: theme.cardBg,
+                color: theme.mutedText,
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
+            >
+              ?
+            </button>
+            <button
+              onClick={function() { setDarkMode(!darkMode); }}
+              style={{
+                padding: "6px 10px",
+                borderRadius: "8px",
+                border: "1px solid " + theme.border,
+                backgroundColor: theme.cardBg,
+                color: theme.text,
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              {darkMode ? "☀️" : "🌙"}
+            </button>
           </div>
-          <button
-            onClick={function() { setChunkBrowserIndex(0); setShowChunkBrowser(true); }}
-            title="Wissensbasis durchblättern"
-            style={{
-              padding: "6px 12px",
-              borderRadius: "8px",
-              border: "1px solid " + theme.border,
-              backgroundColor: theme.cardBg,
-              color: theme.primary,
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            {"📚 Wissen"}
-          </button>
-          <button
-            onClick={resetConversation}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "8px",
-              border: "1px solid " + theme.border,
-              backgroundColor: theme.cardBg,
-              color: theme.primary,
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            + Neue Konversation
-          </button>
-          <button
-            onClick={function() { setTutorialStep(0); setShowTutorial(true); }}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "8px",
-              border: "1px solid " + theme.border,
-              backgroundColor: theme.cardBg,
-              color: theme.mutedText,
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: 700,
-            }}
-          >
-            ?
-          </button>
-          <button
-            onClick={function() { setDarkMode(!darkMode); }}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "8px",
-              border: "1px solid " + theme.border,
-              backgroundColor: theme.cardBg,
-              color: theme.text,
-              cursor: "pointer",
-              fontSize: "16px",
-            }}
-          >
-            {darkMode ? "☀️" : "🌙"}
-          </button>
-        </div>
+        )}
+        {/* Mobile: kompaktes Icon-Menü */}
+        {isMobile && (
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <button
+              onClick={function() { setDarkMode(!darkMode); }}
+              style={{
+                padding: "6px 8px",
+                borderRadius: "8px",
+                border: "1px solid " + theme.border,
+                backgroundColor: theme.cardBg,
+                color: theme.text,
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              {darkMode ? "☀️" : "🌙"}
+            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={function() { setShowMobileMenu(!showMobileMenu); }}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid " + theme.border,
+                  backgroundColor: showMobileMenu ? theme.primary : theme.cardBg,
+                  color: showMobileMenu ? "#ffffff" : theme.text,
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {showMobileMenu ? "✕" : "☰"}
+              </button>
+              {showMobileMenu && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "6px",
+                  backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+                  border: "1px solid " + theme.border,
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                  zIndex: 200,
+                  overflow: "hidden",
+                  minWidth: "200px",
+                }}>
+                  {(totalTokens.input + totalTokens.output) > 0 && (
+                    <div style={{
+                      padding: "10px 16px",
+                      fontSize: "11px",
+                      color: theme.mutedText,
+                      borderBottom: "1px solid " + theme.border,
+                      display: "flex",
+                      gap: "12px",
+                    }}>
+                      <span>{"Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")}</span>
+                      <span>{"$" + totalCost.toFixed(4)}</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={function() { setChunkBrowserIndex(0); setShowChunkBrowser(true); setShowMobileMenu(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                    }}
+                  >
+                    {"📚 Wissensbasis"}
+                  </button>
+                  <button
+                    onClick={function() { resetConversation(); setShowMobileMenu(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                    }}
+                  >
+                    {"+ Neue Konversation"}
+                  </button>
+                  <button
+                    onClick={function() {
+                      if (exportableMessages.length > 0) { exportAsText(); }
+                      setShowMobileMenu(false);
+                    }}
+                    disabled={exportableMessages.length === 0}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: exportableMessages.length > 0 ? theme.text : theme.mutedText,
+                      fontSize: "14px",
+                      cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                      opacity: exportableMessages.length > 0 ? 1 : 0.5,
+                    }}
+                  >
+                    {"⬇ Export (Text)"}
+                  </button>
+                  <button
+                    onClick={function() {
+                      if (exportableMessages.length > 0) { exportAsJson(); }
+                      setShowMobileMenu(false);
+                    }}
+                    disabled={exportableMessages.length === 0}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: exportableMessages.length > 0 ? theme.text : theme.mutedText,
+                      fontSize: "14px",
+                      cursor: exportableMessages.length > 0 ? "pointer" : "not-allowed",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                      opacity: exportableMessages.length > 0 ? 1 : 0.5,
+                    }}
+                  >
+                    {"📄 Export (JSON)"}
+                  </button>
+                  <button
+                    onClick={function() { setSocialComingSoon(""); setXPanelOpen(!xPanelOpen); setShowMobileMenu(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderBottom: "1px solid " + theme.border,
+                    }}
+                  >
+                    {"🐦 Frag auf X"}
+                  </button>
+                  <button
+                    onClick={function() { setTutorialStep(0); setShowTutorial(true); setShowMobileMenu(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: theme.text,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    {"? Hilfe / Tutorial"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Mobile Menu Overlay - schliesst Menue bei Tap ausserhalb */}
+      {showMobileMenu && (
+        <div
+          onClick={function() { setShowMobileMenu(false); }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 150,
+            backgroundColor: "transparent",
+          }}
+        />
+      )}
+
       {/* API-Key Bereich */}
-      <div style={sectionStyle}>
+      <div style={Object.assign({}, sectionStyle, isMobile ? { padding: "4px 10px" } : {})}>
         <div style={innerMax}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end" }}>
-            <div style={{ flex: "1 1 180px", maxWidth: "320px" }}>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: theme.mutedText, marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>🔑 API-Key</span>
-                <span style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: 400 }}>
-                  <span style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: statusColors[apiKeyStatus],
-                    display: "inline-block",
-                  }}></span>
-                  <span style={{ fontSize: "11px", color: statusColors[apiKeyStatus] }}>
-                    {statusLabels[apiKeyStatus]}
-                  </span>
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={function(e) { updateApiKey(e.target.value); }}
-                  onKeyDown={function(e) { if (e.key === "Enter") validateApiKey(apiKeyRef.current); }}
-                  placeholder="sk-ant-..."
-                  style={Object.assign({}, inputStyle, { flex: 1 })}
-                />
-                <button onClick={function() { validateApiKey(apiKeyRef.current); }} style={btnPrimary}>
-                  Prüfen
-                </button>
-              </div>
-            </div>
+          {isMobile ? (
+            /* --- Mobile: einklappbar nach Validierung --- */
             <div>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: theme.mutedText, marginBottom: "4px" }}>
-                Modell
-              </div>
-              <select
-                value={selectedModel}
-                onChange={handleModelChange}
-                style={Object.assign({}, inputStyle, { flex: "none", minWidth: "120px" })}
-              >
-                <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
-                <option value="claude-sonnet-4-5-20250929">Sonnet 4.5</option>
-              </select>
+              {apiKeyCollapsed && apiKeyStatus === "valid" ? (
+                /* Collapsed: Mini-Zeile */
+                <div
+                  onClick={function() { setApiKeyCollapsed(false); }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0", cursor: "pointer" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: theme.mutedText }}>
+                    <span>🔑</span>
+                    <span style={{
+                      width: "7px",
+                      height: "7px",
+                      borderRadius: "50%",
+                      backgroundColor: "#22c55e",
+                      display: "inline-block",
+                    }}></span>
+                    <span style={{ color: "#22c55e", fontSize: "11px" }}>Verbunden</span>
+                    <span style={{ color: theme.mutedText, fontSize: "11px" }}>{PRICING[selectedModel].label}</span>
+                  </div>
+                  <span style={{ fontSize: "10px", color: theme.mutedText }}>{"Bearbeiten ▸"}</span>
+                </div>
+              ) : (
+                /* Expanded: Input-Felder */
+                <div>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "flex-end", marginBottom: "4px" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "11px", fontWeight: 600, color: theme.mutedText, marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span>🔑</span>
+                        <span style={{
+                          width: "7px",
+                          height: "7px",
+                          borderRadius: "50%",
+                          backgroundColor: statusColors[apiKeyStatus],
+                          display: "inline-block",
+                        }}></span>
+                        <span style={{ fontSize: "10px", color: statusColors[apiKeyStatus] }}>
+                          {statusLabels[apiKeyStatus]}
+                        </span>
+                      </div>
+                      <input
+                        type="password"
+                        value={apiKey}
+                        onChange={function(e) { updateApiKey(e.target.value); }}
+                        onKeyDown={function(e) { if (e.key === "Enter") validateApiKey(apiKeyRef.current); }}
+                        placeholder="sk-ant-..."
+                        style={Object.assign({}, inputStyle, { width: "100%", fontSize: "16px", padding: "6px 10px" })}
+                      />
+                    </div>
+                    <button onClick={function() { validateApiKey(apiKeyRef.current); }} style={Object.assign({}, btnPrimary, { padding: "6px 12px", fontSize: "13px" })}>
+                      OK
+                    </button>
+                    <select
+                      value={selectedModel}
+                      onChange={handleModelChange}
+                      style={Object.assign({}, inputStyle, { flex: "none", width: "90px", fontSize: "12px", padding: "6px 4px" })}
+                    >
+                      <option value="claude-haiku-4-5-20251001">Haiku</option>
+                      <option value="claude-sonnet-4-5-20250929">Sonnet</option>
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", color: theme.mutedText }}>
+                    <span>🔒 Key bleibt lokal</span>
+                    <a
+                      href="https://console.anthropic.com/settings/keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: theme.primary, textDecoration: "underline", fontSize: "10px" }}
+                    >
+                      Key erstellen
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
-            <div style={{ flex: "1 1 120px", fontSize: "11px", color: theme.mutedText, lineHeight: 1.5, paddingBottom: "2px" }}>
-              <div style={{ marginBottom: "2px" }}>
-                {selectedModel === "claude-sonnet-4-5-20250929" ? "Sonnet: Detaillierter, 3-5x teurer" : "Haiku: Schnell & kostengünstig"}
+          ) : (
+            /* --- Desktop: bestehendes Layout --- */
+            <div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end" }}>
+                <div style={{ flex: "1 1 180px", maxWidth: "320px" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: theme.mutedText, marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>🔑 API-Key</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: 400 }}>
+                      <span style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: statusColors[apiKeyStatus],
+                        display: "inline-block",
+                      }}></span>
+                      <span style={{ fontSize: "11px", color: statusColors[apiKeyStatus] }}>
+                        {statusLabels[apiKeyStatus]}
+                      </span>
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={function(e) { updateApiKey(e.target.value); }}
+                      onKeyDown={function(e) { if (e.key === "Enter") validateApiKey(apiKeyRef.current); }}
+                      placeholder="sk-ant-..."
+                      style={Object.assign({}, inputStyle, { flex: 1 })}
+                    />
+                    <button onClick={function() { validateApiKey(apiKeyRef.current); }} style={btnPrimary}>
+                      Prüfen
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: theme.mutedText, marginBottom: "4px" }}>
+                    Modell
+                  </div>
+                  <select
+                    value={selectedModel}
+                    onChange={handleModelChange}
+                    style={Object.assign({}, inputStyle, { flex: "none", minWidth: "120px" })}
+                  >
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+                    <option value="claude-sonnet-4-5-20250929">Sonnet 4.5</option>
+                  </select>
+                </div>
+                <div style={{ flex: "1 1 120px", fontSize: "11px", color: theme.mutedText, lineHeight: 1.5, paddingBottom: "2px" }}>
+                  <div style={{ marginBottom: "2px" }}>
+                    {selectedModel === "claude-sonnet-4-5-20250929" ? "Sonnet: Detaillierter, 3-5x teurer" : "Haiku: Schnell & kostengünstig"}
+                  </div>
+                  <a
+                    href="https://console.anthropic.com/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: theme.primary, textDecoration: "underline", fontSize: "11px" }}
+                  >
+                    Noch keinen Key? Hier erstellen
+                  </a>
+                </div>
               </div>
-              <a
-                href="https://console.anthropic.com/settings/keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: theme.primary, textDecoration: "underline", fontSize: "11px" }}
-              >
-                Noch keinen Key? Hier erstellen
-              </a>
+              <div style={{ fontSize: "11px", color: theme.mutedText, marginTop: "6px" }}>
+                🔒 Gib deinen Key nur auf Geräten ein, denen du vertraust.
+              </div>
             </div>
-          </div>
-          <div style={{ fontSize: "11px", color: theme.mutedText, marginTop: "6px" }}>
-            🔒 Gib deinen Key nur auf Geräten ein, denen du vertraust.
-          </div>
+          )}
           {showModelHint && (
             <div style={{
               marginTop: "8px",
@@ -1057,7 +1458,7 @@ export default function CowanApp() {
       )}
 
       {/* Chat-Bereich */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px", minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "10px 8px" : "16px", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
         <div style={innerMax}>
           {messages.map(function(msg, i) {
             var isAssistant = msg.role === "assistant";
@@ -1065,29 +1466,39 @@ export default function CowanApp() {
               <div key={i} style={{
                 display: "flex",
                 justifyContent: isAssistant ? "flex-start" : "flex-end",
-                marginBottom: "12px",
+                marginBottom: isMobile ? "8px" : "12px",
               }}>
                 <div style={{
-                  maxWidth: "85%",
+                  maxWidth: isMobile ? "95%" : "85%",
                   borderRadius: "12px",
-                  padding: "12px 16px",
+                  padding: isMobile ? "10px 12px" : "12px 16px",
                   backgroundColor: isAssistant ? theme.cowanBubble : theme.userBubble,
                   border: "1px solid " + theme.border,
                 }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                    <span style={{ fontSize: "18px", flexShrink: 0 }}>{isAssistant ? "🦞" : "👤"}</span>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: isMobile ? "6px" : "8px" }}>
+                    <span style={{ fontSize: isMobile ? "16px" : "18px", flexShrink: 0 }}>{isAssistant ? "🦞" : "👤"}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: "11px", fontWeight: 600, color: theme.mutedText, marginBottom: "4px" }}>
                         {isAssistant ? "Cowan" : "Du"}
                       </div>
+                      {/* Bild-Vorschau in User-Nachrichten */}
+                      {!isAssistant && msg.imageData && (
+                        <div style={{ marginBottom: "6px" }}>
+                          <img
+                            src={"data:" + msg.imageData.mimeType + ";base64," + msg.imageData.base64}
+                            alt="Gesendetes Bild"
+                            style={{ maxWidth: isMobile ? "150px" : "200px", maxHeight: isMobile ? "150px" : "200px", borderRadius: "8px", objectFit: "cover", border: "1px solid " + theme.border }}
+                          />
+                        </div>
+                      )}
                       <div
-                        style={{ lineHeight: 1.6, wordBreak: "break-word" }}
+                        style={{ lineHeight: 1.6, wordBreak: "break-word", fontSize: isMobile ? "13px" : "14px" }}
                         dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
                       />
                       {isAssistant && msg.isWelcome && messageCount === 0 && (
                         <div style={{ marginTop: "12px" }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                            {exampleQuestions.map(function(q, qi) {
+                          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "6px" }}>
+                            {(isMobile ? exampleQuestions.slice(0, 2) : exampleQuestions).map(function(q, qi) {
                               return (
                                 <button
                                   key={qi}
@@ -1164,40 +1575,106 @@ export default function CowanApp() {
 
       {/* Kosten-Hinweis */}
       {messageCount >= 10 && (
-        <div style={{ textAlign: "center", padding: "4px 16px", fontSize: "11px", color: darkMode ? "#eab308" : "#d97706" }}>
-          Dein Chat-Verlauf umfasst bereits {messageCount} Nachrichten. Starte eine neue Konversation, um Kosten zu sparen.
+        <div style={{ textAlign: "center", padding: isMobile ? "4px 8px" : "4px 16px", fontSize: isMobile ? "10px" : "11px", color: darkMode ? "#eab308" : "#d97706" }}>
+          {isMobile ? (messageCount + " Nachrichten - neue Konversation spart Kosten") : ("Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen.")}
+        </div>
+      )}
+
+      {/* Bild-Vorschau + Sonnet-Hinweis */}
+      {pendingImage && (
+        <div style={{ borderTop: "1px solid " + theme.border, padding: isMobile ? "6px 8px" : "8px 16px", backgroundColor: theme.cardBg, flexShrink: 0 }}>
+          <div style={Object.assign({}, innerMax, { display: "flex", alignItems: "center", gap: "8px" })}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <img
+                src={"data:" + pendingImage.mimeType + ";base64," + pendingImage.base64}
+                alt="Vorschau"
+                style={{ width: isMobile ? "50px" : "60px", height: isMobile ? "50px" : "60px", objectFit: "cover", borderRadius: "8px", border: "1px solid " + theme.border }}
+              />
+              <button
+                onClick={removeImage}
+                style={{
+                  position: "absolute", top: "-6px", right: "-6px",
+                  width: "20px", height: "20px", borderRadius: "50%",
+                  backgroundColor: "#ef4444", color: "#fff", border: "none",
+                  fontSize: "12px", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", padding: 0,
+                  lineHeight: 1,
+                }}
+              >x</button>
+            </div>
+            <div style={{ fontSize: "12px", color: theme.mutedText, flex: 1 }}>
+              <div>{pendingImage.fileName}</div>
+              {selectedModel === "claude-haiku-4-5-20251001" && (
+                <div style={{ color: "#eab308", marginTop: "2px" }}>📷 Sonnet empfohlen fuer bessere Bildanalyse</div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Eingabe */}
-      <div style={Object.assign({}, sectionStyle, { borderBottom: "none", borderTop: "1px solid " + theme.border })}>
-        <div style={Object.assign({}, innerMax, { display: "flex", gap: "8px" })}>
+      <div style={{
+        borderTop: "1px solid " + theme.border,
+        padding: isMobile ? "6px 8px" : "12px 16px",
+        paddingBottom: isMobile ? "calc(6px + env(safe-area-inset-bottom, 0px))" : "12px",
+        flexShrink: 0,
+        backgroundColor: theme.cardBg,
+      }}>
+        {/* Verstecktes File-Input */}
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleImageSelect}
+        />
+        <div style={Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end" })}>
+          {/* Kamera-Button */}
+          <button
+            onClick={function() { if (fileInputRef.current) fileInputRef.current.click(); }}
+            disabled={apiKeyStatus === "none" || apiKeyStatus === "invalid"}
+            title={isMobile ? "Foto aufnehmen" : "Bild hochladen"}
+            style={{
+              background: "none", border: "1px solid " + theme.border, borderRadius: "8px",
+              color: (apiKeyStatus === "none" || apiKeyStatus === "invalid") ? theme.mutedText : theme.primary,
+              cursor: (apiKeyStatus === "none" || apiKeyStatus === "invalid") ? "not-allowed" : "pointer",
+              padding: isMobile ? "6px" : "8px 10px",
+              minWidth: isMobile ? "36px" : "auto",
+              minHeight: isMobile ? "36px" : "42px",
+              fontSize: isMobile ? "16px" : "16px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+              opacity: (apiKeyStatus === "none" || apiKeyStatus === "invalid") ? 0.4 : 1,
+            }}
+          >📷</button>
           <textarea
             value={input}
             onChange={function(e) { setInput(e.target.value); }}
             onKeyDown={handleKeyDown}
-            placeholder={apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Bitte zuerst einen gültigen API-Key eingeben..." : "Stelle deine Frage..."}
+            placeholder={apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "Zuerst API-Key eingeben..." : (pendingImage ? "Frage zum Bild (optional)..." : "Stelle deine Frage...")}
             disabled={apiKeyStatus === "none" || apiKeyStatus === "invalid"}
             rows={1}
             style={Object.assign({}, inputStyle, {
               resize: "none",
-              minHeight: "42px",
+              minHeight: isMobile ? "40px" : "42px",
               maxHeight: "120px",
               opacity: (apiKeyStatus === "none" || apiKeyStatus === "invalid") ? 0.5 : 1,
+              fontSize: isMobile ? "16px" : "14px",
             })}
           />
           <button
             onClick={sendMessage}
             disabled={!canSend}
-            style={canSend ? btnPrimary : btnDisabled}
+            style={Object.assign({}, canSend ? btnPrimary : btnDisabled, isMobile ? { padding: "6px 14px", minHeight: "40px" } : {})}
           >
-            {isLoading ? "..." : "Senden"}
+            {isLoading ? "..." : (isMobile ? "➤" : "Senden")}
           </button>
         </div>
       </div>
 
-      {/* Quellen-Panel */}
-      <div style={{ borderTop: "1px solid " + theme.border, flexShrink: 0 }}>
+      {/* Quellen-Panel - nur Desktop */}
+      <div style={{ borderTop: isMobile ? "none" : ("1px solid " + theme.border), flexShrink: 0, display: isMobile ? "none" : "block" }}>
         <div style={innerMax}>
           <button
             onClick={function() { setSourcePanelOpen(!sourcePanelOpen); }}
@@ -1277,40 +1754,42 @@ export default function CowanApp() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{
-        borderTop: "1px solid " + theme.border,
-        backgroundColor: theme.cardBg,
-        padding: "8px 16px",
-        flexShrink: 0,
-      }}>
-        <div style={Object.assign({}, innerMax, { display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px" })}>
-          <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: theme.mutedText }}>
-            <span>Tokens: {(totalTokens.input + totalTokens.output).toLocaleString("de-DE")}</span>
-            <span>{"Kosten: $" + totalCost.toFixed(4) + " USD"}</span>
-            <span>Modell: {PRICING[selectedModel].label}</span>
+      {/* Footer - nur Desktop */}
+      {!isMobile && (
+        <div style={{
+          borderTop: "1px solid " + theme.border,
+          backgroundColor: theme.cardBg,
+          padding: "8px 16px",
+          flexShrink: 0,
+        }}>
+          <div style={Object.assign({}, innerMax, { display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px" })}>
+            <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: theme.mutedText }}>
+              <span>Tokens: {(totalTokens.input + totalTokens.output).toLocaleString("de-DE")}</span>
+              <span>{"Kosten: $" + totalCost.toFixed(4) + " USD"}</span>
+              <span>Modell: {PRICING[selectedModel].label}</span>
+            </div>
+            <a
+              href="https://docs.anthropic.com/en/docs/about-claude/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: theme.primary, fontSize: "10px", textDecoration: "underline" }}
+            >
+              Aktuelle Preise
+            </a>
           </div>
-          <a
-            href="https://docs.anthropic.com/en/docs/about-claude/pricing"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: theme.primary, fontSize: "10px", textDecoration: "underline" }}
-          >
-            Aktuelle Preise
-          </a>
+          <div style={{ textAlign: "center", fontSize: "10px", color: theme.mutedText, marginTop: "4px" }}>
+            Ein unabhängiger Leitfaden. Claude ist eine Marke von Anthropic PBC, n8n ist eine Marke der n8n GmbH.
+          </div>
         </div>
-        <div style={{ textAlign: "center", fontSize: "10px", color: theme.mutedText, marginTop: "4px" }}>
-          Ein unabhängiger Leitfaden. Claude ist eine Marke von Anthropic PBC, n8n ist eine Marke der n8n GmbH.
-        </div>
-      </div>
+      )}
 
-      {/* Social Tabs */}
+      {/* Social Tabs - nur Desktop */}
       <div style={{
         position: "fixed",
         right: xPanelOpen ? "308px" : "8px",
         top: "50%",
         transform: "translateY(-50%)",
-        display: "flex",
+        display: isMobile ? "none" : "flex",
         flexDirection: "column",
         gap: "8px",
         zIndex: 10001,
@@ -1384,7 +1863,7 @@ export default function CowanApp() {
       </div>
 
       {/* Coming Soon Tooltip */}
-      {socialComingSoon && (
+      {socialComingSoon && !isMobile && (
         <div style={{
           position: "fixed",
           right: "40px",
@@ -1429,12 +1908,12 @@ export default function CowanApp() {
       {/* X-Panel Slide-out */}
       <div style={{
         position: "fixed",
-        right: xPanelOpen ? "0px" : "-300px",
+        right: xPanelOpen ? "0px" : (isMobile ? "-100%" : "-300px"),
         top: 0,
-        width: "300px",
+        width: isMobile ? "100%" : "300px",
         height: "100%",
         backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-        borderLeft: "1px solid " + theme.border,
+        borderLeft: isMobile ? "none" : ("1px solid " + theme.border),
         zIndex: 10000,
         display: "flex",
         flexDirection: "column",
@@ -1511,16 +1990,16 @@ export default function CowanApp() {
           height: "100%",
           backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
-          alignItems: "center",
+          alignItems: isMobile ? "flex-end" : "center",
           justifyContent: "center",
           zIndex: 10000,
         }}>
           <div style={{
             backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-            borderRadius: "16px",
-            padding: "32px",
+            borderRadius: isMobile ? "16px 16px 0 0" : "16px",
+            padding: isMobile ? "24px 20px" : "32px",
             maxWidth: "400px",
-            width: "90%",
+            width: isMobile ? "100%" : "90%",
             textAlign: "center",
             border: "1px solid " + theme.border,
           }}>
@@ -1598,17 +2077,17 @@ export default function CowanApp() {
           height: "100%",
           backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
-          alignItems: "center",
+          alignItems: isMobile ? "flex-end" : "center",
           justifyContent: "center",
           zIndex: 10000,
         }}>
           <div style={{
             backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-            borderRadius: "16px",
-            padding: "32px",
+            borderRadius: isMobile ? "16px 16px 0 0" : "16px",
+            padding: isMobile ? "20px 16px" : "32px",
             maxWidth: "600px",
-            width: "90%",
-            maxHeight: "80vh",
+            width: isMobile ? "100%" : "90%",
+            maxHeight: isMobile ? "85vh" : "80vh",
             display: "flex",
             flexDirection: "column",
             border: "1px solid " + theme.border,
