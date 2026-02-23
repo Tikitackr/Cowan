@@ -1535,19 +1535,22 @@ function CowanApp() {
       width: "44px",
       height: "44px",
       borderRadius: "50%",
-      backgroundColor: "#1d9bf0",
+      backgroundColor: "#f0f0f0",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       cursor: "pointer",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-      border: xPanelOpen ? "2px solid " + theme.primary : "2px solid transparent"
+      boxShadow: xPanelOpen
+        ? "inset 2px 2px 5px rgba(0,0,0,0.15), inset -2px -2px 5px rgba(255,255,255,0.8)"
+        : "4px 4px 10px rgba(0,0,0,0.15), -4px -4px 10px rgba(255,255,255,0.9)",
+      border: xPanelOpen ? "2px solid " + theme.primary : "2px solid transparent",
+      transition: "box-shadow 0.2s ease"
     }
   }, /*#__PURE__*/React.createElement("svg", {
     width: "20",
     height: "20",
     viewBox: "0 0 24 24",
-    fill: "#ffffff"
+    fill: "#000000"
   }, /*#__PURE__*/React.createElement("path", {
     d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
   }))), /*#__PURE__*/React.createElement("div", {
