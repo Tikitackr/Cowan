@@ -241,9 +241,13 @@ export default function CowanApp() {
   /* iOS Keyboard Fix: Eingabefeld ins Sichtfeld scrollen wenn Tastatur aufklappt */
   var handleInputFocus = function() {
     if (isMobile && inputAreaRef.current) {
+      /* Mehrfach scrollen: iOS Keyboard-Animation dauert ~400ms */
       setTimeout(function() {
-        inputAreaRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 300);
+        inputAreaRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+      setTimeout(function() {
+        inputAreaRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 400);
     }
   };
 
@@ -870,7 +874,9 @@ export default function CowanApp() {
     height: isMobile ? "100dvh" : "100vh",
     display: "flex",
     flexDirection: "column",
-    overflow: "hidden",
+    overflow: isMobile ? "auto" : "hidden",
+    WebkitOverflowScrolling: "touch",
+    overscrollBehavior: "contain",
     backgroundColor: theme.bg,
     color: theme.text,
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
