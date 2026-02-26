@@ -65,56 +65,56 @@ const KNOWLEDGE_BASE = [{
   title: "OpenClaw Setup & Installation",
   category: "setup",
   difficulty: "beginner",
-  summary: "Anleitung zur Installation und Ersteinrichtung von OpenClaw inkl. API-Key-Konfiguration.",
+  summary: "Anleitung zur Installation und Ersteinrichtung von OpenClaw auf einem VPS mit Docker.",
   dependencies: [],
-  tags: ["installation", "api-key", "ersteinrichtung", "openclaw"],
-  content: "OpenClaw ist ein Open-Source-Agent-Framework, das speziell fuer die KI-gestuetzte Bucherstellung entwickelt wurde. Es ermoeglicht dir, einen Hauptagenten (definiert durch SOUL.md) und mehrere Sub-Agenten (definiert durch AGENTS.md) zu orchestrieren.\n\n**Installation:**\n\n1. Repository klonen: Lade das OpenClaw-Repository von GitHub herunter.\n2. Abhaengigkeiten installieren: Fuehre npm install im Projektverzeichnis aus.\n3. API-Key konfigurieren: Erstelle eine .env-Datei im Stammverzeichnis und trage deinen Claude API-Key ein.\n4. Erststart: Fuehre npm run dev aus, um das Dashboard zu starten.\n\n**Erste Schritte nach der Installation:**\n\nNach der Installation solltest du zunaechst die SOUL.md-Datei anpassen. Sie definiert die Persoenlichkeit und das Verhalten deines Hauptagenten. Danach kannst du in AGENTS.md die Sub-Agenten-Rollen konfigurieren.\n\n**Tipp:** Starte mit der Standardkonfiguration und passe sie schrittweise an dein Buchprojekt an.",
-  source: "Kapitel 3 - Erste Schritte mit OpenClaw",
-  lastUpdated: "2026-02-01"
+  tags: ["installation", "docker", "vps", "ersteinrichtung", "openclaw", "hostinger"],
+  content: "OpenClaw ist eine Open-Source, selbst-gehostete Gateway-Plattform, die LLMs in persistente, multikanalfaehige KI-Agenten verwandelt. Ein Gateway-Prozess verwaltet Routing, Authentifizierung und Verbindungen zu ueber 20 Messaging-Plattformen ueber einen einzigen Port (Standard: 18789).\n\n**Installation auf einem VPS (z.B. Hostinger):**\n\n1. VPS einrichten: Einen KVM-VPS mit Ubuntu 22.04+ bestellen (z.B. Hostinger VPS mit Docker Manager).\n2. Per SSH verbinden: ssh root@DEINE-SERVER-IP\n3. Docker pruefen: docker --version und docker compose version (bei Hostinger vorinstalliert).\n4. OpenClaw installieren: Den OpenClaw-Container mit Docker Compose deployen.\n5. Gateway starten: openclaw gateway --port 18789\n6. API-Key konfigurieren: ANTHROPIC_API_KEY in ~/.openclaw/.env eintragen.\n7. Status pruefen: openclaw status und openclaw health --json\n\n**Erste Schritte nach der Installation:**\n\nNach der Installation passt du zunaechst die SOUL.md-Datei an – sie definiert die Persoenlichkeit deines Agenten (Schreibstil, Tonfall, Zielgruppe). Danach konfigurierst du die AGENTS.md als Bedienungsanleitung mit Modi (z.B. WRITER, EDITOR, QA).\n\n**Tipp:** Nutze openclaw doctor zum Diagnostizieren von Problemen und openclaw onboard fuer den Setup-Wizard.",
+  source: "Kapitel 2 - Installation",
+  lastUpdated: "2026-02-26"
 }, {
   id: "chunk-soul-md",
   title: "SOUL.md verstehen",
   category: "architecture",
   difficulty: "beginner",
-  summary: "SOUL.md definiert die Persoenlichkeit und das Verhalten des Hauptagenten in OpenClaw.",
+  summary: "SOUL.md definiert die Persoenlichkeit, den Schreibstil und die Regeln deines OpenClaw-Agenten.",
   dependencies: ["chunk-openclaw-setup"],
-  tags: ["soul", "agent", "persoenlichkeit", "konfiguration", "hauptagent"],
-  content: "Die SOUL.md ist das Herzstueck deines OpenClaw-Projekts. Sie definiert, wer dein Hauptagent ist, wie er denkt und wie er schreibt.\n\n**Aufbau der SOUL.md:**\n\nDie Datei besteht aus mehreren Abschnitten:\n\n- **Identitaet:** Name, Rolle und Kernaufgabe des Agenten\n- **Schreibstil:** Tonalitaet, Zielgruppe, sprachliche Praeferenzen\n- **Wissensdomaene:** Themengebiete, in denen der Agent kompetent ist\n- **Verhaltensregeln:** Was der Agent tun und lassen soll\n- **Ausgabeformat:** Wie Ergebnisse strukturiert werden sollen\n\n**Best Practices:**\n\n1. Halte die SOUL.md unter 500 Woerter - knapp und praezise\n2. Definiere klare Grenzen: Was soll der Agent NICHT tun?\n3. Verwende konkrete Beispiele fuer den gewuenschten Schreibstil\n4. Aktualisiere die SOUL.md iterativ basierend auf den Ergebnissen",
-  source: "Kapitel 4 - Die Seele deines Agenten",
-  lastUpdated: "2026-02-01"
+  tags: ["soul", "agent", "persoenlichkeit", "konfiguration", "schreibstil"],
+  content: "Die SOUL.md ist das Herzstueck deines OpenClaw-Projekts. Sie definiert, wer dein Agent ist, wie er denkt und wie er schreibt. Die SOUL.md wird immer zuerst geladen und praegt die gesamte Kommunikation des Agenten.\n\n**Aufbau der SOUL.md:**\n\nDie Datei besteht aus mehreren Abschnitten:\n\n- **Identitaet:** Name, Rolle und Kernaufgabe des Agenten\n- **Schreibstil:** Tonalitaet, Zielgruppe, sprachliche Praeferenzen (z.B. Du-Form, kurze Saetze)\n- **Wissensdomaene:** Themengebiete, in denen der Agent kompetent ist\n- **Verhaltensregeln:** Was der Agent tun und lassen soll\n- **Qualitaets-Checkliste:** Kriterien, die erfuellt sein muessen bevor ein Ergebnis als fertig gilt\n- **Toolchain:** Welche Werkzeuge der Agent kennt (Docker, n8n, Pandoc etc.)\n- **Grenzen:** Keine externen Aktionen ohne Rueckfrage, keine erfundenen Befehle\n\n**Best Practices:**\n\n1. Halte die SOUL.md unter 500 Woerter - knapp und praezise\n2. Definiere klare Grenzen: Was soll der Agent NICHT tun?\n3. Verwende konkrete Beispiele fuer den gewuenschten Schreibstil\n4. Aktualisiere die SOUL.md iterativ basierend auf den Ergebnissen\n\n**Wichtig:** SOUL.md ist fuer Persoenlichkeit und Stil zustaendig. Die Workflow-Logik (Modi, Routing) gehoert in die AGENTS.md.",
+  source: "Kapitel 4 - Agent-Konzepte",
+  lastUpdated: "2026-02-26"
 }, {
   id: "chunk-agents-md",
-  title: "Sub-Agenten mit AGENTS.md",
+  title: "AGENTS.md – Bedienungsanleitung & Modi",
   category: "agents",
   difficulty: "intermediate",
-  summary: "AGENTS.md definiert die 8 Sub-Agenten-Rollen, die den Hauptagenten bei der Bucherstellung unterstuetzen.",
+  summary: "AGENTS.md ist die Bedienungsanleitung deines Agenten: Regeln, Prioritaeten und Modi (WRITER, EDITOR, QA).",
   dependencies: ["chunk-soul-md"],
-  tags: ["agenten", "rollen", "agents-md", "sub-agenten", "workflow"],
-  content: "In OpenClaw arbeiten bis zu 8 spezialisierte Sub-Agenten zusammen, jeder mit einer klar definierten Rolle. Die Konfiguration erfolgt in der AGENTS.md-Datei.\n\n**Die 8 Sub-Agenten-Rollen:**\n\n1. **content-architect** - Plant die Buchstruktur, Kapitelgliederung und den roten Faden\n2. **technical-writer** - Schreibt die Hauptinhalte basierend auf der Struktur\n3. **fact-checker** - Ueberprueft Fakten, Links und technische Aussagen\n4. **german-editor** - Korrigiert Grammatik, Stil und Ausdruck fuer deutsches Publikum\n5. **consistency-checker** - Stellt Konsistenz ueber alle Kapitel hinweg sicher\n6. **meta-documenter** - Dokumentiert den Erstellungsprozess und Entscheidungen\n7. **tutorial-writer** - Erstellt Schritt-fuer-Schritt-Anleitungen und Praxisbeispiele\n8. **workflow-coordinator** - Koordiniert die Zusammenarbeit aller Agenten\n\n**Tipp:** Nicht alle Rollen muessen aktiv sein. Fuer kuerzere Projekte reichen oft content-architect, technical-writer und german-editor.",
-  source: "Kapitel 5 - Dein Agenten-Team",
-  lastUpdated: "2026-02-01"
+  tags: ["agenten", "modi", "agents-md", "writer", "editor", "qa", "n8n"],
+  content: "Die AGENTS.md in OpenClaw ist KEINE Sub-Agenten-Definition. Sie ist die Bedienungsanleitung und der Speicher deines Agenten – mit Regeln, Prioritaeten und Verhaltens-Modi.\n\n**Die korrekte Architektur:**\n\nEin Agent arbeitet mit Modi, orchestriert durch n8n:\n\n1. **WRITER-Modus** - Erzeugt Rohtext aus einem Outline und Constraints (Zielgruppe, Stil, Wortanzahl). Output: JSON mit chapter_markdown und code_blocks.\n2. **EDITOR-Modus** - Macht daraus sauberes Kapitel-Markdown (Ueberschriften, Code-Bloecke, Struktur). Output: JSON mit revised_markdown und changes_log.\n3. **QA-Modus** - Prueft Logik, Konsistenz, markiert offene Punkte. Output: JSON mit status, issues und suggestions.\n\n**Wie es funktioniert:**\n\nn8n sendet einen Job-Typ (z.B. write_chapter) an den OpenClaw-Agenten. Der Router in AGENTS.md leitet zum richtigen Modus weiter. Der Agent arbeitet im entsprechenden Modus und liefert strukturiertes JSON zurueck, das n8n parsen und speichern kann.\n\n**Wichtig:** n8n ist der Orchestrator (Trigger, Speicherung, Versionierung). Der Agent ist der Ausfuehrer innerhalb seines aktuellen Modus. Keine echten Sub-Agenten – nur Prompt-Struktur mit klarer Aufgabentrennung.\n\n**Tipp:** Halte die AGENTS.md unter 150 Zeilen. Fuer den Start reichen die drei Modi WRITER, EDITOR und QA.",
+  source: "Kapitel 4 - Agent-Konzepte",
+  lastUpdated: "2026-02-26"
 }, {
   id: "chunk-masterprompt",
-  title: "Masterprompt-Technik",
+  title: "Modi-Pattern & n8n-Orchestrierung",
   category: "prompting",
   difficulty: "intermediate",
-  summary: "Strukturierte Prompts (Masterprompts) sind der Schluessel zur konsistenten KI-gestuetzten Bucherstellung.",
+  summary: "Das Modi-Pattern mit n8n-Orchestrierung ist der Schluessel zur konsistenten KI-gestuetzten Bucherstellung.",
   dependencies: ["chunk-soul-md", "chunk-agents-md"],
-  tags: ["prompt", "masterprompt", "technik", "struktur", "prompt-engineering"],
-  content: "Ein Masterprompt ist ein detaillierter, strukturierter Prompt, der alle Informationen enthaelt, die ein KI-Modell braucht, um ein ganzes Buchkapitel konsistent zu erstellen.\n\n**Aufbau eines Masterprompts:**\n\n- **Kontextblock:** Worum geht es im Buch? Welches Kapitel wird geschrieben?\n- **Stilanweisungen:** Tonalitaet, Zielgruppe, Sprachniveau\n- **Strukturvorgabe:** Gliederung mit Ueberschriften und ungefaehren Wortanzahlen\n- **Inhaltliche Leitplanken:** Welche Punkte muessen abgedeckt werden?\n- **Beispiele:** 1-2 Absaetze im gewuenschten Stil als Referenz\n- **Ausgabeformat:** Markdown-Struktur, Sonderformatierungen\n\n**Vorteile gegenueber einfachen Prompts:**\n\nEinfache Prompts wie 'Schreibe ein Kapitel ueber X' liefern inkonsistente Ergebnisse. Ein Masterprompt hingegen sorgt dafuer, dass jedes Kapitel im gleichen Stil, mit der gleichen Tiefe und in der gleichen Struktur geschrieben wird.\n\n**Praxis-Tipp:** Erstelle einen Masterprompt-Template und passe ihn fuer jedes Kapitel an.",
-  source: "Kapitel 6 - Prompt-Engineering fuer Buecher",
-  lastUpdated: "2026-02-01"
+  tags: ["modi", "n8n", "orchestrierung", "pipeline", "workflow", "json"],
+  content: "Statt einfacher Prompts nutzt du ein strukturiertes Modi-Pattern: n8n orchestriert den Agenten durch verschiedene Modi fuer jedes Kapitel.\n\n**Die drei Ebenen:**\n\n1. **n8n (Command-Layer):** Trigger (Kapitel starten), Job-Typ festlegen, Ergebnis speichern, versionieren, exportieren.\n2. **OpenClaw Agent (Ausfuehrer):** Empfaengt Job-Typ, arbeitet im entsprechenden Modus (WRITER, EDITOR, QA), liefert strukturiertes JSON zurueck.\n3. **SOUL.md (Persoenlichkeit):** Schreibstil, Tonfall, Zielgruppe – bleibt ueber alle Modi hinweg gleich.\n\n**Pipeline pro Kapitel:**\n\n1. n8n sendet job_type=write_chapter mit Outline und Constraints\n2. Agent arbeitet im WRITER-Modus, liefert JSON mit Rohtext\n3. n8n sendet job_type=revise_chapter mit dem Rohtext\n4. Agent arbeitet im EDITOR-Modus, liefert bereinigtes Markdown\n5. n8n sendet job_type=qa_chapter\n6. Agent arbeitet im QA-Modus, prueft und liefert Status-Report\n7. Thomas/Texterin reviewed (menschlicher Schritt)\n\n**Warum JSON-Output?**\n\nStriktes JSON ermoeglicht n8n, die Ergebnisse automatisch zu parsen, in Dateien zu speichern und den naechsten Schritt der Pipeline zu triggern. Kein manuelles Copy-Paste noetig.\n\n**Praxis-Tipp:** Teste die Pipeline zuerst mit einem einzelnen Kapitel (z.B. Kapitel 2 Installation), bevor du alle 15 Kapitel im Batch generierst.",
+  source: "Kapitel 9 - Architektur",
+  lastUpdated: "2026-02-26"
 }, {
   id: "chunk-dashboard-modules",
-  title: "Dashboard Module M1-M6",
+  title: "Dashboard Module: Home + M1-M6",
   category: "dashboard",
   difficulty: "beginner",
-  summary: "Das OpenClaw-Dashboard besteht aus 6 Modulen (M1-M6), die den gesamten Buchproduktionsprozess abbilden.",
+  summary: "Das OpenClaw-Dashboard besteht aus 7 Modulen (Home + M1-M6) mit 120 Tasks fuer den gesamten Buchproduktionsprozess.",
   dependencies: [],
-  tags: ["dashboard", "module", "uebersicht", "M1", "M2", "M3", "M4", "M5", "M6"],
-  content: "Das OpenClaw-Dashboard ist die zentrale Steuerungseinheit fuer dein Buchprojekt. Es besteht aus 6 Modulen:\n\n**M1 - Projektuebersicht:** Zeigt den aktuellen Status deines Buchprojekts: Fortschritt pro Kapitel, offene Aufgaben und Zeitplan.\n\n**M2 - Agenten-Steuerung:** Hier konfigurierst und startest du deine Agenten (SOUL.md und AGENTS.md). Du kannst einzelne Sub-Agenten aktivieren oder deaktivieren.\n\n**M3 - Content-Pipeline:** Verwaltet den Schreibprozess: Von der Gliederung ueber den Erstentwurf bis zum fertigen Kapitel.\n\n**M4 - Qualitaetssicherung:** Fact-Checking, Konsistenzpruefung und Lektorat.\n\n**M5 - Publishing:** Export und Veroeffentlichung: Formatierung fuer Amazon KDP, EPUB-Generierung und Metadaten-Verwaltung.\n\n**M6 - Dein Projekt (Cowan):** Der KI-Wissensassistent Cowan ist hier eingebettet. Stelle Fragen zum Buchprozess.\n\n**Tipp:** Starte mit M1 und M2, bevor du die anderen Module nutzt.",
-  source: "Kapitel 2 - Das Dashboard im Ueberblick",
-  lastUpdated: "2026-02-01"
+  tags: ["dashboard", "module", "uebersicht", "home", "M1", "M2", "M3", "M4", "M5", "M6"],
+  content: "Das OpenClaw-Dashboard ist die zentrale Steuerungseinheit fuer dein Buchprojekt. Es besteht aus 7 Modulen mit insgesamt 120 Tasks:\n\n**Home - Projektuebersicht:** Zeigt den aktuellen Status deines Buchprojekts: Stat-Boxen, Kapitel-Chart, Buchteile-Uebersicht und Zeitplan.\n\n**M1 - Server Setup (Sprint 1, 18 Tasks):** VPS einrichten, Docker installieren, OpenClaw deployen, Tailscale VPN, Firewall konfigurieren, n8n aufsetzen.\n\n**M2 - Agent Setup (Sprint 2, 10 Tasks):** SOUL.md und AGENTS.md konfigurieren – Modi (WRITER, EDITOR, QA) einrichten, Testkapitel generieren, Review-Prozess testen.\n\n**M3 - Automation (Sprint 3, 10 Tasks):** n8n-Workflows fuer die Kapitel-Pipeline, Batch-Produktion, X/Twitter-Automatisierung mit Telegram-Approval-Flow.\n\n**M4 - Publishing (Sprint 4, 7 Tasks):** Amazon KDP Upload, Cover-Erstellung, EPUB-Formatierung, Metadaten und Preisgestaltung. Inkl. Kosten- und ROI-Rechnung.\n\n**M5 - Buch & Code (75 Tasks):** 15 Kapitel mit je 5 Schritten (Outline, Draft, Check, Review, Final). Personalisierte Code-Snippets und Settings-Panel fuer deine Variablen.\n\n**M6 - Dein Projekt:** Die Wundertuete! Agent-Team Generator (generiert SOUL.md + AGENTS.md fuer dein Projekt per Claude API) und Dashboard-Konfigurator (Prompt-Generator fuer ein eigenes Dashboard).\n\n**Tipp:** Starte mit M1 (Server), dann M2 (Agent), dann M3 (Automation). M6 ist fuer dein eigenes Buchprojekt.",
+  source: "Dashboard-Uebersicht",
+  lastUpdated: "2026-02-26"
 }, {
   id: "chunk-n8n-batch",
   title: "Batch-Produktion mit n8n",
@@ -928,7 +928,7 @@ function CowanApp() {
     var ts = new Date().toISOString().slice(0, 10);
     triggerDownload(lines.join("\n"), "cowan-chat-" + ts + ".txt", "text/plain");
   };
-  var exampleQuestions = ["Was ist die SOUL.md?", "Wie starte ich OpenClaw?", "Welche Sub-Agenten gibt es?", "Wie funktioniert ein Masterprompt?"];
+  var exampleQuestions = ["Was ist die SOUL.md?", "Wie starte ich OpenClaw?", "Welche Modi hat der Agent?", "Wie funktioniert das Modi-Pattern?"];
   var handleExampleClick = function (question) {
     setInput(question);
   };
