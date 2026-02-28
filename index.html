@@ -495,11 +495,52 @@
       lastUpdated: "2026-02-26"
     }
   ];
-  function buildSystemPrompt(chunks) {
+  function buildSystemPrompt(chunks, options) {
+    var isCompanion = options && options.isCompanion;
     var chunkSection = chunks.map(function(chunk) {
       return "### " + chunk.title + " [" + chunk.id + "]\nKategorie: " + chunk.category + " | Schwierigkeit: " + chunk.difficulty + "\n" + chunk.content;
     }).join("\n\n");
-    return 'Du bist Cowan - Die Buch-Instanz, der KI-Wissensassistent fuer das Buch "Agentic Authorship: Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik".\n\n## Deine Aufgabe\nDu hilfst Lesern, Fragen zum Buch, zu OpenClaw, zu n8n-Workflows, zur Claude-API und zur KI-gestuetzten Bucherstellung zu beantworten.\nDu basierst deine Antworten ausschliesslich auf der bereitgestellten Wissensbasis.\n\n## Wissensbasis\n\n' + chunkSection + "\n\n## Antwortregeln\n1. Beantworte Fragen NUR basierend auf den Wissensbausteinen\n2. Zitiere verwendete Quellen am Ende deiner Antwort in exakt diesem Format:\n   ---QUELLEN---\n   chunk-id-hier\n   ---QUELLEN-ENDE---\n3. Wenn die Wissensbasis keine Antwort enthaelt, sage das ehrlich\n4. Antworte immer auf Deutsch\n5. Halte Antworten praxisnah und konkret\n6. Gib IMMER den ---QUELLEN--- Block am Ende an";
+    var basePrompt = 'Du bist Cowan - Die Buch-Instanz, der KI-Wissensassistent fuer das Buch "Agentic Authorship: Mit n8n, Claude und OpenClaw zur automatisierten Buchfabrik".\n\n## Deine Aufgabe\nDu hilfst Lesern, Fragen zum Buch, zu OpenClaw, zu n8n-Workflows, zur Claude-API und zur KI-gestuetzten Bucherstellung zu beantworten.\nDu basierst deine Antworten ausschliesslich auf der bereitgestellten Wissensbasis.\n\n## Wissensbasis\n\n' + chunkSection + "\n\n## Antwortregeln\n1. Beantworte Fragen NUR basierend auf den Wissensbausteinen\n2. Zitiere verwendete Quellen am Ende deiner Antwort in exakt diesem Format:\n   ---QUELLEN---\n   chunk-id-hier\n   ---QUELLEN-ENDE---\n3. Wenn die Wissensbasis keine Antwort enthaelt, sage das ehrlich\n4. Antworte immer auf Deutsch\n5. Halte Antworten praxisnah und konkret\n6. Gib IMMER den ---QUELLEN--- Block am Ende an";
+    if (isCompanion) {
+      basePrompt += "\n\n## Companion-Modus: Buchseiten-Erkennung & Smarte Reaktionen\n\nDu bist im Companion-Modus (Handy). Der Leser fotografiert Buchseiten, Terminals oder Fehlermeldungen.\n\n### Wenn ein Bild gesendet wird, analysiere es und gib am ANFANG deiner Antwort einen strukturierten Block zurueck:\n\n---SCAN---\ntype: page|error|terminal|screenshot|unknown\nchapter: NUMMER_ODER_0\nsection: ABSCHNITTSNAME_ODER_LEER\naction: mark_read|analyze_error|show_help|none\nsummary: KURZE_ZUSAMMENFASSUNG\n---SCAN-ENDE---\n\n### Erkennungsregeln:\n- **Buchseite (type: page):** Erkenne Kapitelueberschriften, Seitenzahlen, Code-Bloecke. Wenn ein Kapitel erkannt wird, setze chapter auf die Kapitelnummer und action auf mark_read.\n- **Fehlermeldung (type: error):** Erkenne Terminal-Fehler, Stack-Traces, Error-Dialoge. Analysiere den Fehler und gib eine konkrete Loesung. Setze action auf analyze_error.\n- **Terminal/Screenshot (type: terminal oder screenshot):** Erkenne VPS-Dashboards, Docker-Output, Kommandozeilen. Setze action auf show_help.\n- **Unbekannt (type: unknown):** Wenn nicht klar ist was das Bild zeigt, frage nach.\n\n### Reaktionen:\n- Nach Buchseiten-Erkennung: Bestatige kurz welches Kapitel/welcher Abschnitt, und gib einen hilfreichen Tipp zum naechsten Schritt.\n- Nach Fehler-Erkennung: Analysiere den Fehler und gib eine konkrete, ausfuehrbare Loesung.\n- Halte Antworten im Companion-Modus KURZ (max 3-4 Saetze), der Leser ist am Handy.\n- Benutze Emojis sparsam aber gezielt (\u{1F4D6} fuer Kapitel, \u26A0\uFE0F fuer Fehler, \u2705 fuer Erfolg).\n\n## Companion-Modus: Sprachbefehle & Intent-Erkennung\n\nWenn der User einen Sprachbefehl gibt (oft kurze, gesprochene Saetze), erkenne die Absicht und gib am ANFANG deiner Antwort einen Intent-Block zurueck:\n\n---INTENT---\ntype: command|question|help\naction: mark_chapter_done|next_chapter|show_progress|answer_question|offer_camera|none\nchapter: NUMMER_ODER_0\nconfirmation: KURZE_BESTAETIGUNG\n---INTENT-ENDE---\n\n### Erkennungsregeln:\n- **COMMAND (type: command):** Enthaelt Woerter wie 'fertig', 'erledigt', 'markieren', 'naechstes', 'done', 'weiter'. Fuehre die Aktion aus und bestatige SEHR kurz (1 Satz).\n- **QUESTION (type: question):** Enthaelt ein Fragewort (was, wie, warum, wann, wo) oder endet mit Fragezeichen. Beantworte die Frage mit Wissens-Chunks, aber halte die Antwort kurz (2-3 Saetze).\n- **HELP (type: help):** Enthaelt Woerter wie 'Fehler', 'geht nicht', 'Problem', 'Hilfe', 'funktioniert nicht', 'stuck'. Biete an: 'Zeig mir ein Foto davon' oder stelle gezielte Rueckfragen.\n\n### Wichtig fuer Sprachbefehle:\n- Antworte IMMER sehr kurz \u2013 der User hoert/liest am Handy\n- Bei Commands: Nur bestaetigen, nicht erklaeren\n- Beispiel: 'Kapitel 3 fertig' \u2192 '\u2705 Kapitel 3 als gelesen markiert!'";
+    }
+    return basePrompt;
+  }
+  function parseScanBlock(text) {
+    var match = text.match(/---SCAN---\s*([\s\S]*?)\s*---SCAN-ENDE---/);
+    if (!match) return { cleanText: text, scan: null };
+    var block = match[1].trim();
+    var scan = {};
+    var lines = block.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var colonIdx = lines[i].indexOf(":");
+      if (colonIdx > 0) {
+        var key = lines[i].slice(0, colonIdx).trim();
+        var val = lines[i].slice(colonIdx + 1).trim();
+        scan[key] = val;
+      }
+    }
+    if (scan.chapter) scan.chapter = parseInt(scan.chapter, 10) || 0;
+    var cleanText = text.replace(/---SCAN---[\s\S]*?---SCAN-ENDE---/, "").trim();
+    return { cleanText, scan };
+  }
+  function parseIntentBlock(text) {
+    var match = text.match(/---INTENT---\s*([\s\S]*?)\s*---INTENT-ENDE---/);
+    if (!match) return { cleanText: text, intent: null };
+    var block = match[1].trim();
+    var intent = {};
+    var lines = block.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var colonIdx = lines[i].indexOf(":");
+      if (colonIdx > 0) {
+        var key = lines[i].slice(0, colonIdx).trim();
+        var val = lines[i].slice(colonIdx + 1).trim();
+        intent[key] = val;
+      }
+    }
+    if (intent.chapter) intent.chapter = parseInt(intent.chapter, 10) || 0;
+    var cleanText = text.replace(/---INTENT---[\s\S]*?---INTENT-ENDE---/, "").trim();
+    return { cleanText, intent };
   }
   function parseSourcesFromResponse(text) {
     var match = text.match(/---QUELLEN---\s*([\s\S]*?)\s*---QUELLEN-ENDE---/);
@@ -768,6 +809,63 @@
     var pendingImage = _pendingImage[0];
     var setPendingImage = _pendingImage[1];
     var fileInputRef = (0, import_react2.useRef)(null);
+    var _isListening = (0, import_react2.useState)(false);
+    var isListening = _isListening[0];
+    var setIsListening = _isListening[1];
+    var _speechTranscript = (0, import_react2.useState)("");
+    var speechTranscript = _speechTranscript[0];
+    var setSpeechTranscript = _speechTranscript[1];
+    var _speechSupported = (0, import_react2.useState)(typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition));
+    var speechSupported = _speechSupported[0];
+    var speechRecogRef = (0, import_react2.useRef)(null);
+    var startListening = function() {
+      if (!speechSupported || isListening) return;
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var recognition = new SpeechRecognition();
+      recognition.lang = "de-DE";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = function(event) {
+        var transcript = "";
+        for (var i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setSpeechTranscript(transcript);
+        if (event.results[event.results.length - 1].isFinal) {
+          setInput(transcript);
+          setSpeechTranscript("");
+          setIsListening(false);
+        }
+      };
+      recognition.onerror = function(event) {
+        if (event.error !== "no-speech" && event.error !== "aborted") {
+          setError("Spracherkennung fehlgeschlagen: " + event.error);
+        }
+        setIsListening(false);
+        setSpeechTranscript("");
+      };
+      recognition.onend = function() {
+        setIsListening(false);
+      };
+      speechRecogRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+      setSpeechTranscript("");
+    };
+    var stopListening = function() {
+      if (speechRecogRef.current) {
+        speechRecogRef.current.stop();
+      }
+      setIsListening(false);
+    };
+    var toggleListening = function() {
+      if (isListening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    };
     var _showConfetti = (0, import_react2.useState)(false);
     var showConfetti = _showConfetti[0];
     var setShowConfetti = _showConfetti[1];
@@ -973,6 +1071,9 @@
         var mimeType = file.type || "image/jpeg";
         setPendingImage({ base64, mimeType, fileName: file.name });
         setError("");
+        if (isCompanionMode && companionView === "actions") {
+          setCompanionView("chat");
+        }
       };
       reader.readAsDataURL(file);
       e.target.value = "";
@@ -1039,7 +1140,7 @@
         body: JSON.stringify({
           model: selectedModel,
           max_tokens: 2048,
-          system: buildSystemPrompt(KNOWLEDGE_BASE),
+          system: buildSystemPrompt(KNOWLEDGE_BASE, { isCompanion: isCompanionMode }),
           messages: trimmed
         }),
         signal: controller.signal
@@ -1077,7 +1178,69 @@
           setTotalCost(function(prev) {
             return prev + callCost;
           });
-          var parsed = parseSourcesFromResponse(answerText);
+          var scanResult = parseScanBlock(answerText);
+          var textAfterScan = scanResult.scan ? scanResult.cleanText : answerText;
+          if (scanResult.scan && isCompanionMode) {
+            var s = scanResult.scan;
+            var iconMap = { page: "\u{1F4D6}", error: "\u26A0\uFE0F", terminal: "\u{1F4BB}", screenshot: "\u{1F4F1}", unknown: "\u2753" };
+            var logIcon = iconMap[s.type] || "\u{1F4F7}";
+            setCompanionLog(function(prev) {
+              return prev.concat([{ icon: logIcon, text: s.summary || "Scan durchgefuehrt", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+            });
+            if (s.action === "mark_read" && s.chapter > 0) {
+              setCompanionProgress(function(prev) {
+                var completed = prev.completedChapters.slice();
+                if (completed.indexOf(s.chapter) === -1) {
+                  completed.push(s.chapter);
+                  completed.sort(function(a, b) {
+                    return a - b;
+                  });
+                }
+                return Object.assign({}, prev, {
+                  completedChapters: completed,
+                  currentChapter: s.chapter + 1,
+                  overallPercent: Math.round(completed.length / prev.totalChapters * 100)
+                });
+              });
+            }
+          }
+          var intentResult = parseIntentBlock(textAfterScan);
+          var textAfterIntent = intentResult.intent ? intentResult.cleanText : textAfterScan;
+          if (intentResult.intent && isCompanionMode) {
+            var it = intentResult.intent;
+            if (it.action === "mark_chapter_done" && it.chapter > 0) {
+              setCompanionProgress(function(prev) {
+                var completed = prev.completedChapters.slice();
+                if (completed.indexOf(it.chapter) === -1) {
+                  completed.push(it.chapter);
+                  completed.sort(function(a, b) {
+                    return a - b;
+                  });
+                }
+                return Object.assign({}, prev, {
+                  completedChapters: completed,
+                  currentChapter: it.chapter + 1,
+                  overallPercent: Math.round(completed.length / prev.totalChapters * 100)
+                });
+              });
+              setCompanionLog(function(prev) {
+                return prev.concat([{ icon: "\u2705", text: it.confirmation || "Kapitel " + it.chapter + " erledigt", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+              });
+            } else if (it.action === "next_chapter") {
+              setCompanionLog(function(prev) {
+                return prev.concat([{ icon: "\u27A1\uFE0F", text: it.confirmation || "Naechstes Kapitel", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+              });
+            } else if (it.type === "help") {
+              setCompanionLog(function(prev) {
+                return prev.concat([{ icon: "\u{1F198}", text: it.confirmation || "Hilfe angefragt", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+              });
+            } else if (it.type === "question") {
+              setCompanionLog(function(prev) {
+                return prev.concat([{ icon: "\u2753", text: it.confirmation || "Frage gestellt", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+              });
+            }
+          }
+          var parsed = parseSourcesFromResponse(textAfterIntent);
           setLastSources(parsed.sourceIds);
           var words = parsed.cleanText.split(" ");
           typingWordsRef.current = words;
@@ -1288,7 +1451,7 @@
       boxShadow: "0 0 0 0 rgba(217,119,6,0)"
     };
     var btnDisabled = Object.assign({}, btnPrimary, { opacity: 0.4, cursor: "not-allowed" });
-    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: isMobile ? "20px" : "24px", height: isMobile ? "20px" : "24px", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }, dangerouslySetInnerHTML: { __html: OPENCLAW_SVG } }), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }" } }), /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: theme.primaryDark } }, isCompanionMode ? isMobile ? "Cowan" : "Cowan \u2013 Augen & Ohren" : isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "11px", color: theme.mutedText } }, isCompanionMode ? /* @__PURE__ */ import_react.default.createElement("span", null, "Companion-Modus ", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#22c55e", marginLeft: "4px", verticalAlign: "middle" } })) : "Agentic Authorship Wissensassistent"))), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "8px", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ import_react.default.createElement(
+    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: isMobile ? "20px" : "24px", height: isMobile ? "20px" : "24px", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }, dangerouslySetInnerHTML: { __html: OPENCLAW_SVG } }), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 8px rgba(217,119,6,0); } }" } }), /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: theme.primaryDark } }, isCompanionMode ? isMobile ? "Cowan" : "Cowan \u2013 Augen & Ohren" : isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "11px", color: theme.mutedText } }, isCompanionMode ? /* @__PURE__ */ import_react.default.createElement("span", null, "Companion-Modus ", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#22c55e", marginLeft: "4px", verticalAlign: "middle" } })) : "Agentic Authorship Wissensassistent"))), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "8px", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -1787,6 +1950,14 @@
         if (fileInputRef.current) fileInputRef.current.click();
       } },
       { icon: "\u{1F399}\uFE0F", label: "Sprachbefehl", action: function() {
+        if (speechSupported) {
+          setCompanionView("chat");
+          setTimeout(function() {
+            startListening();
+          }, 300);
+        } else {
+          setError("Spracherkennung wird von diesem Browser nicht unterstuetzt.");
+        }
       } },
       { icon: "\u{1F4AC}", label: "Schnelle Frage", action: function() {
         setCompanionView("chat");
@@ -1973,10 +2144,36 @@
         }
       },
       "\u{1F4F7}"
-    ), /* @__PURE__ */ import_react.default.createElement(
+    ), speechSupported && /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        onClick: toggleListening,
+        disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
+        title: isListening ? "Spracherkennung stoppen" : "Sprachbefehl",
+        style: {
+          background: isListening ? theme.primary : "none",
+          border: "1px solid " + (isListening ? theme.primary : theme.border),
+          borderRadius: "8px",
+          color: isListening ? "#ffffff" : apiKeyStatus === "none" || apiKeyStatus === "invalid" ? theme.mutedText : theme.primary,
+          cursor: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? "not-allowed" : "pointer",
+          padding: isMobile ? "6px" : "8px 10px",
+          minWidth: isMobile ? "36px" : "auto",
+          minHeight: isMobile ? "36px" : "42px",
+          fontSize: isMobile ? "16px" : "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          opacity: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? 0.4 : 1,
+          transition: "background-color 0.2s, color 0.2s, border-color 0.2s",
+          animation: isListening ? "micPulse 1.5s ease-in-out infinite" : "none"
+        }
+      },
+      isListening ? "\u{1F534}" : "\u{1F399}\uFE0F"
+    ), isListening && speechTranscript && /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "absolute", bottom: "100%", left: "16px", right: "16px", padding: "8px 12px", backgroundColor: theme.cardBg, border: "1px solid " + theme.primary, borderRadius: "8px", fontSize: "13px", color: theme.text, marginBottom: "4px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "11px" } }, "Hoere zu... "), speechTranscript), /* @__PURE__ */ import_react.default.createElement(
       "textarea",
       {
-        value: input,
+        value: isListening ? speechTranscript : input,
         onChange: function(e) {
           setInput(e.target.value);
         },
