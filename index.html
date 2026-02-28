@@ -831,7 +831,14 @@
     var setWaveformData = _waveformData[1];
     var WAVEFORM_BARS = 32;
     var startAudioAnalyser = function() {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices) return;
+      if (isMobile || typeof navigator === "undefined" || !navigator.mediaDevices) {
+        var fallbackBars = [];
+        for (var i = 0; i < WAVEFORM_BARS; i++) {
+          fallbackBars.push(0.08);
+        }
+        setWaveformData(fallbackBars);
+        return;
+      }
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
         audioStreamRef.current = stream;
         var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -846,8 +853,8 @@
           analyser.getByteFrequencyData(dataArray);
           var bars = [];
           var step = Math.floor(dataArray.length / WAVEFORM_BARS);
-          for (var i = 0; i < WAVEFORM_BARS; i++) {
-            var val = dataArray[i * step] || 0;
+          for (var i2 = 0; i2 < WAVEFORM_BARS; i2++) {
+            var val = dataArray[i2 * step] || 0;
             bars.push(val / 255);
           }
           setWaveformData(bars);
@@ -855,11 +862,11 @@
         };
         updateWaveform();
       }).catch(function() {
-        var fallbackBars = [];
-        for (var i = 0; i < WAVEFORM_BARS; i++) {
-          fallbackBars.push(0.08);
+        var fallbackBars2 = [];
+        for (var i2 = 0; i2 < WAVEFORM_BARS; i2++) {
+          fallbackBars2.push(0.08);
         }
-        setWaveformData(fallbackBars);
+        setWaveformData(fallbackBars2);
       });
     };
     var stopAudioAnalyser = function() {
