@@ -1230,10 +1230,23 @@
       setPendingImage(null);
     };
     var sendMessage = function() {
-      var hasText = input.trim().length > 0;
+      var speechText = "";
+      if (isListening) {
+        speechText = collectedTranscriptRef.current || speechTranscript;
+        userStoppedRef.current = true;
+        if (speechRecogRef.current) {
+          speechRecogRef.current.stop();
+        }
+        setIsListening(false);
+        setSpeechTranscript("");
+        collectedTranscriptRef.current = "";
+        stopAudioAnalyser();
+      }
+      var messageText = speechText || input.trim();
+      var hasText = messageText.length > 0;
       var hasImage = pendingImage !== null;
       if (!hasText && !hasImage || isLoading || apiKeyStatus === "none" || apiKeyStatus === "invalid") return;
-      var userMessage = input.trim();
+      var userMessage = messageText;
       setInput("");
       setError("");
       var lowerMsg = userMessage.toLowerCase();
@@ -1518,7 +1531,7 @@
     var handleExampleClick = function(question) {
       setInput(question);
     };
-    var canSend = (input.trim() || pendingImage) && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
+    var canSend = (input.trim() || pendingImage || isListening && speechTranscript) && !isLoading && (apiKeyStatus === "valid" || apiKeyStatus === "uncertain");
     var statusColors = { none: "#9ca3af", valid: "#22c55e", invalid: "#ef4444", uncertain: "#eab308" };
     var statusLabels = { none: "Kein Key", valid: "Verbunden", invalid: "Ung\xFCltiger Key", uncertain: "Key gespeichert" };
     var messageCount = messages.filter(function(m) {
