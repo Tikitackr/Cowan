@@ -635,12 +635,16 @@
     var _companionLog = (0, import_react2.useState)([]);
     var companionLog = _companionLog[0];
     var setCompanionLog = _companionLog[1];
+    var _companionKeyReady = (0, import_react2.useState)(false);
+    var companionKeyReady = _companionKeyReady[0];
+    var setCompanionKeyReady = _companionKeyReady[1];
     (0, import_react2.useEffect)(function() {
       if (isCompanionMode && companionParams.apikey) {
         try {
           var decoded = atob(companionParams.apikey);
           if (decoded && decoded.indexOf("sk-ant-") === 0) {
             updateApiKey(decoded);
+            setCompanionKeyReady(true);
           }
         } catch (e) {
         }
@@ -1052,6 +1056,12 @@
         setApiKeyStatus("uncertain");
       });
     };
+    (0, import_react2.useEffect)(function() {
+      if (isCompanionMode && companionKeyReady && apiKeyRef.current) {
+        hasConfettiedRef.current = true;
+        validateApiKey(apiKeyRef.current);
+      }
+    }, [companionKeyReady]);
     var handleImageSelect = function(e) {
       var file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -1810,7 +1820,7 @@
           backgroundColor: "transparent"
         }
       }
-    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, sectionStyle, isMobile ? { padding: "4px 10px" } : {}) }, /* @__PURE__ */ import_react.default.createElement("div", { style: innerMax }, isMobile ? (
+    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, sectionStyle, isMobile ? { padding: "4px 10px" } : {}, isCompanionMode ? { display: "none" } : {}) }, /* @__PURE__ */ import_react.default.createElement("div", { style: innerMax }, isMobile ? (
       /* --- Mobile: einklappbar nach Validierung --- */
       /* @__PURE__ */ import_react.default.createElement("div", null, apiKeyCollapsed && apiKeyStatus === "valid" ? (
         /* Collapsed: Mini-Zeile */
