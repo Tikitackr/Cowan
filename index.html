@@ -854,7 +854,12 @@
           animFrameRef.current = requestAnimationFrame(updateWaveform);
         };
         updateWaveform();
-      }).catch(function(err) {
+      }).catch(function() {
+        var fallbackBars = [];
+        for (var i = 0; i < WAVEFORM_BARS; i++) {
+          fallbackBars.push(0.08);
+        }
+        setWaveformData(fallbackBars);
       });
     };
     var stopAudioAnalyser = function() {
@@ -1519,7 +1524,7 @@
       boxShadow: "0 0 0 0 rgba(217,119,6,0)"
     };
     var btnDisabled = Object.assign({}, btnPrimary, { opacity: 0.4, cursor: "not-allowed" });
-    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: isMobile ? "20px" : "24px", height: isMobile ? "20px" : "24px", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }, dangerouslySetInnerHTML: { __html: OPENCLAW_SVG } }), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 8px rgba(217,119,6,0); } }" } }), /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: theme.primaryDark } }, isCompanionMode ? isMobile ? "Cowan" : "Cowan \u2013 Augen & Ohren" : isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "11px", color: theme.mutedText } }, isCompanionMode ? /* @__PURE__ */ import_react.default.createElement("span", null, "Companion-Modus ", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#22c55e", marginLeft: "4px", verticalAlign: "middle" } })) : "Agentic Authorship Wissensassistent"))), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "8px", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ import_react.default.createElement(
+    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: isMobile ? "20px" : "24px", height: isMobile ? "20px" : "24px", animation: lobsterWiggle ? "lobsterWiggle 0.5s ease-in-out 3" : "none" }, dangerouslySetInnerHTML: { __html: OPENCLAW_SVG } }), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 8px rgba(217,119,6,0); } } @keyframes waveIdle { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }" } }), /* @__PURE__ */ import_react.default.createElement("div", null, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontWeight: 700, fontSize: isMobile ? "14px" : "16px", color: theme.primaryDark } }, isCompanionMode ? isMobile ? "Cowan" : "Cowan \u2013 Augen & Ohren" : isMobile ? "Cowan" : "Cowan - Die Buch-Instanz"), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "11px", color: theme.mutedText } }, isCompanionMode ? /* @__PURE__ */ import_react.default.createElement("span", null, "Companion-Modus ", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#22c55e", marginLeft: "4px", verticalAlign: "middle" } })) : "Agentic Authorship Wissensassistent"))), !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "8px", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -2186,7 +2191,7 @@
         style: { display: "none" },
         onChange: handleImageSelect
       }
-    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end" }) }, /* @__PURE__ */ import_react.default.createElement(
+    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end", position: "relative" }) }, /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -2238,23 +2243,28 @@
         }
       },
       isListening ? "\u{1F534}" : "\u{1F399}\uFE0F"
-    ), isListening && /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "absolute", bottom: "100%", left: "16px", right: "16px", marginBottom: "4px", backgroundColor: theme.cardBg, border: "1px solid " + theme.primary, borderRadius: "10px", overflow: "hidden" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "40px", padding: "4px 12px", gap: "2px" } }, (waveformData.length > 0 ? waveformData : Array(WAVEFORM_BARS).fill(0)).map(function(val, idx) {
+    ), isListening && /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "absolute", bottom: "100%", left: "16px", right: "16px", marginBottom: "4px", backgroundColor: theme.cardBg, border: "1px solid " + theme.primary, borderRadius: "10px", overflow: "hidden" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "40px", padding: "4px 12px", gap: "2px" } }, Array(WAVEFORM_BARS).fill(0).map(function(_, idx) {
+      var val = waveformData[idx] || 0;
+      var hasRealData = analyserRef.current !== null;
       var minH = 3;
       var maxH = 32;
-      var h = minH + val * (maxH - minH);
-      var opacity = 0.4 + val * 0.6;
-      return import_react.default.createElement("div", {
-        key: idx,
-        style: {
-          width: "3px",
-          height: h + "px",
-          borderRadius: "2px",
-          backgroundColor: theme.primary,
-          opacity,
-          transition: "height 0.08s ease-out, opacity 0.08s ease-out",
-          flexShrink: 0
-        }
-      });
+      var h = hasRealData ? minH + val * (maxH - minH) : 14;
+      var opacity = hasRealData ? 0.4 + val * 0.6 : 0.5;
+      var barStyle = {
+        width: "3px",
+        height: h + "px",
+        borderRadius: "2px",
+        backgroundColor: theme.primary,
+        opacity,
+        flexShrink: 0
+      };
+      if (hasRealData) {
+        barStyle.transition = "height 0.08s ease-out, opacity 0.08s ease-out";
+      } else {
+        barStyle.animation = "waveIdle 1.2s ease-in-out infinite";
+        barStyle.animationDelay = idx * 0.04 + "s";
+      }
+      return import_react.default.createElement("div", { key: idx, style: barStyle });
     })), speechTranscript && /* @__PURE__ */ import_react.default.createElement("div", { style: { padding: "2px 12px 6px", fontSize: "12px", color: theme.text, borderTop: "1px solid " + theme.border } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "10px" } }, "Erkannt: "), speechTranscript)), /* @__PURE__ */ import_react.default.createElement(
       "textarea",
       {
