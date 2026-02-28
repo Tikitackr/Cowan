@@ -822,6 +822,60 @@
     var _speechSupported = (0, import_react2.useState)(typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition));
     var speechSupported = _speechSupported[0];
     var speechRecogRef = (0, import_react2.useRef)(null);
+    var audioContextRef = (0, import_react2.useRef)(null);
+    var analyserRef = (0, import_react2.useRef)(null);
+    var audioStreamRef = (0, import_react2.useRef)(null);
+    var animFrameRef = (0, import_react2.useRef)(null);
+    var _waveformData = (0, import_react2.useState)([]);
+    var waveformData = _waveformData[0];
+    var setWaveformData = _waveformData[1];
+    var WAVEFORM_BARS = 32;
+    var startAudioAnalyser = function() {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices) return;
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        audioStreamRef.current = stream;
+        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = audioCtx;
+        var analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        analyserRef.current = analyser;
+        var source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        var dataArray = new Uint8Array(analyser.frequencyBinCount);
+        var updateWaveform = function() {
+          analyser.getByteFrequencyData(dataArray);
+          var bars = [];
+          var step = Math.floor(dataArray.length / WAVEFORM_BARS);
+          for (var i = 0; i < WAVEFORM_BARS; i++) {
+            var val = dataArray[i * step] || 0;
+            bars.push(val / 255);
+          }
+          setWaveformData(bars);
+          animFrameRef.current = requestAnimationFrame(updateWaveform);
+        };
+        updateWaveform();
+      }).catch(function(err) {
+      });
+    };
+    var stopAudioAnalyser = function() {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(function() {
+        });
+        audioContextRef.current = null;
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(function(track) {
+          track.stop();
+        });
+        audioStreamRef.current = null;
+      }
+      analyserRef.current = null;
+      setWaveformData([]);
+    };
     var startListening = function() {
       if (!speechSupported || isListening) return;
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -848,20 +902,24 @@
         }
         setIsListening(false);
         setSpeechTranscript("");
+        stopAudioAnalyser();
       };
       recognition.onend = function() {
         setIsListening(false);
+        stopAudioAnalyser();
       };
       speechRecogRef.current = recognition;
       recognition.start();
       setIsListening(true);
       setSpeechTranscript("");
+      startAudioAnalyser();
     };
     var stopListening = function() {
       if (speechRecogRef.current) {
         speechRecogRef.current.stop();
       }
       setIsListening(false);
+      stopAudioAnalyser();
     };
     var toggleListening = function() {
       if (isListening) {
@@ -2180,7 +2238,24 @@
         }
       },
       isListening ? "\u{1F534}" : "\u{1F399}\uFE0F"
-    ), isListening && speechTranscript && /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "absolute", bottom: "100%", left: "16px", right: "16px", padding: "8px 12px", backgroundColor: theme.cardBg, border: "1px solid " + theme.primary, borderRadius: "8px", fontSize: "13px", color: theme.text, marginBottom: "4px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "11px" } }, "Hoere zu... "), speechTranscript), /* @__PURE__ */ import_react.default.createElement(
+    ), isListening && /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "absolute", bottom: "100%", left: "16px", right: "16px", marginBottom: "4px", backgroundColor: theme.cardBg, border: "1px solid " + theme.primary, borderRadius: "10px", overflow: "hidden" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "40px", padding: "4px 12px", gap: "2px" } }, (waveformData.length > 0 ? waveformData : Array(WAVEFORM_BARS).fill(0)).map(function(val, idx) {
+      var minH = 3;
+      var maxH = 32;
+      var h = minH + val * (maxH - minH);
+      var opacity = 0.4 + val * 0.6;
+      return import_react.default.createElement("div", {
+        key: idx,
+        style: {
+          width: "3px",
+          height: h + "px",
+          borderRadius: "2px",
+          backgroundColor: theme.primary,
+          opacity,
+          transition: "height 0.08s ease-out, opacity 0.08s ease-out",
+          flexShrink: 0
+        }
+      });
+    })), speechTranscript && /* @__PURE__ */ import_react.default.createElement("div", { style: { padding: "2px 12px 6px", fontSize: "12px", color: theme.text, borderTop: "1px solid " + theme.border } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "10px" } }, "Erkannt: "), speechTranscript)), /* @__PURE__ */ import_react.default.createElement(
       "textarea",
       {
         value: isListening ? speechTranscript : input,
