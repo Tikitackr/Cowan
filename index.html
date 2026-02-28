@@ -919,57 +919,72 @@
       analyserRef.current = null;
       setWaveformData([]);
     };
+    var collectedTranscriptRef = (0, import_react2.useRef)("");
     var startListening = function() {
       if (!speechSupported || isListening) return;
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       var recognition = new SpeechRecognition();
       recognition.lang = "de-DE";
       recognition.interimResults = true;
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.maxAlternatives = 1;
+      collectedTranscriptRef.current = "";
       recognition.onresult = function(event) {
-        var transcript = "";
+        var finalText = "";
+        var interimText = "";
         for (var i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalText += event.results[i][0].transcript;
+          } else {
+            interimText += event.results[i][0].transcript;
+          }
         }
-        setSpeechTranscript(transcript);
-        if (isMobile) {
+        if (finalText) {
+          collectedTranscriptRef.current = finalText;
+        }
+        var displayText = collectedTranscriptRef.current;
+        if (interimText) {
+          displayText = displayText + (displayText ? " " : "") + interimText;
+        }
+        setSpeechTranscript(displayText);
+        if (isMobile && (interimText || finalText)) {
           triggerMobileWave();
-        }
-        if (event.results[event.results.length - 1].isFinal) {
-          setInput(transcript);
-          setSpeechTranscript("");
         }
       };
       recognition.onerror = function(event) {
         if (event.error !== "no-speech" && event.error !== "aborted") {
           setError("Spracherkennung fehlgeschlagen: " + event.error);
         }
+        if (collectedTranscriptRef.current) {
+          setInput(collectedTranscriptRef.current);
+        }
         setIsListening(false);
         setSpeechTranscript("");
+        collectedTranscriptRef.current = "";
         stopAudioAnalyser();
       };
       recognition.onend = function() {
         if (!userStoppedRef.current) {
           try {
-            var newRecog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            newRecog.lang = "de-DE";
-            newRecog.interimResults = true;
-            newRecog.continuous = false;
-            newRecog.maxAlternatives = 1;
-            newRecog.onresult = recognition.onresult;
-            newRecog.onerror = recognition.onerror;
-            newRecog.onend = recognition.onend;
-            speechRecogRef.current = newRecog;
-            newRecog.start();
+            recognition.start();
           } catch (e) {
+            if (collectedTranscriptRef.current) {
+              setInput(collectedTranscriptRef.current);
+            }
             setIsListening(false);
+            setSpeechTranscript("");
+            collectedTranscriptRef.current = "";
             stopAudioAnalyser();
           }
-        } else {
-          setIsListening(false);
-          stopAudioAnalyser();
+          return;
         }
+        if (collectedTranscriptRef.current) {
+          setInput(collectedTranscriptRef.current);
+        }
+        setIsListening(false);
+        setSpeechTranscript("");
+        collectedTranscriptRef.current = "";
+        stopAudioAnalyser();
       };
       userStoppedRef.current = false;
       speechRecogRef.current = recognition;
