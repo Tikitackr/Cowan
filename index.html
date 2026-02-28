@@ -822,6 +822,7 @@
     var _speechSupported = (0, import_react2.useState)(typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition));
     var speechSupported = _speechSupported[0];
     var speechRecogRef = (0, import_react2.useRef)(null);
+    var userStoppedRef = (0, import_react2.useRef)(false);
     var audioContextRef = (0, import_react2.useRef)(null);
     var analyserRef = (0, import_react2.useRef)(null);
     var audioStreamRef = (0, import_react2.useRef)(null);
@@ -938,7 +939,6 @@
         if (event.results[event.results.length - 1].isFinal) {
           setInput(transcript);
           setSpeechTranscript("");
-          setIsListening(false);
         }
       };
       recognition.onerror = function(event) {
@@ -950,9 +950,28 @@
         stopAudioAnalyser();
       };
       recognition.onend = function() {
-        setIsListening(false);
-        stopAudioAnalyser();
+        if (!userStoppedRef.current) {
+          try {
+            var newRecog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            newRecog.lang = "de-DE";
+            newRecog.interimResults = true;
+            newRecog.continuous = false;
+            newRecog.maxAlternatives = 1;
+            newRecog.onresult = recognition.onresult;
+            newRecog.onerror = recognition.onerror;
+            newRecog.onend = recognition.onend;
+            speechRecogRef.current = newRecog;
+            newRecog.start();
+          } catch (e) {
+            setIsListening(false);
+            stopAudioAnalyser();
+          }
+        } else {
+          setIsListening(false);
+          stopAudioAnalyser();
+        }
       };
+      userStoppedRef.current = false;
       speechRecogRef.current = recognition;
       recognition.start();
       setIsListening(true);
@@ -960,6 +979,7 @@
       startAudioAnalyser();
     };
     var stopListening = function() {
+      userStoppedRef.current = true;
       if (speechRecogRef.current) {
         speechRecogRef.current.stop();
       }
