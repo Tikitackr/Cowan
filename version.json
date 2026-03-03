@@ -1,6 +1,6 @@
 {
-  "version": "6.8.0",
+  "version": "5.4.0",
   "date": "2026-03-03",
-  "message": "n8n-Aufraeumen: Alle aktiven n8n-Referenzen durch Multi-Agent/Chefredakteur ersetzt. Dashboard_v6 bereinigt (Tasks, Sections, MASTERPROMPT, docker-compose). Test-Dateien archiviert. Batch 4: 3 neue Chunks im Widget.",
-  "url": "https://tikitackr.github.io/OpenClaw-Dashboard/"
+  "message": "n8n-Aufraeumen: Alle n8n-Referenzen durch Multi-Agent/Chefredakteur ersetzt. Batch 4: 3 neue Chunks (cost-optimization, agentic-coding, deep-research). 36 Chunks total.",
+  "url": "https://tikitackr.github.io/Cowan/"
 }
