@@ -1205,9 +1205,9 @@
         text: 'Klicke oben auf "\u{1F4DA} Wissen", um alle 8 Wissensbausteine des Buches zu durchbl\xE4ttern \u2013 ganz ohne Frage zu stellen. So bekommst du einen \xDCberblick \xFCber alle Themen.'
       },
       {
-        icon: "\u{1F426}",
-        title: "Kein Key? Frag auf X!",
-        text: 'Du kannst deine Frage auch direkt auf X (Twitter) stellen. Klicke auf "Frag Cowan auf X" und die Community hilft dir weiter.'
+        icon: "\u{1F511}",
+        title: "API-Key holen",
+        text: "Besuche console.anthropic.com, erstelle einen Account und generiere deinen API-Key. Der Key bleibt nur in deinem Browser \u2013 sicher und privat."
       }
     ];
     var _apiKey = (0, import_react2.useState)("");
@@ -1259,12 +1259,6 @@
     var _error = (0, import_react2.useState)("");
     var error = _error[0];
     var setError = _error[1];
-    var _xPanelOpen = (0, import_react2.useState)(false);
-    var xPanelOpen = _xPanelOpen[0];
-    var setXPanelOpen = _xPanelOpen[1];
-    var _xInput = (0, import_react2.useState)("");
-    var xInput = _xInput[0];
-    var setXInput = _xInput[1];
     var _showExportMenu = (0, import_react2.useState)(false);
     var showExportMenu = _showExportMenu[0];
     var setShowExportMenu = _showExportMenu[1];
@@ -1274,9 +1268,6 @@
     var _chunkBrowserIndex = (0, import_react2.useState)(0);
     var chunkBrowserIndex = _chunkBrowserIndex[0];
     var setChunkBrowserIndex = _chunkBrowserIndex[1];
-    var _socialComingSoon = (0, import_react2.useState)("");
-    var socialComingSoon = _socialComingSoon[0];
-    var setSocialComingSoon = _socialComingSoon[1];
     var _lobsterWiggle = (0, import_react2.useState)(false);
     var lobsterWiggle = _lobsterWiggle[0];
     var setLobsterWiggle = _lobsterWiggle[1];
@@ -1700,14 +1691,6 @@
             setShowExportMenu(false);
             return;
           }
-          if (socialComingSoon) {
-            setSocialComingSoon("");
-            return;
-          }
-          if (xPanelOpen) {
-            setXPanelOpen(false);
-            return;
-          }
           if (sourcePanelOpen) {
             setSourcePanelOpen(false);
             return;
@@ -1718,7 +1701,7 @@
       return function() {
         document.removeEventListener("keydown", handleGlobalKeyDown);
       };
-    }, [showMobileMenu, showTutorial, showChunkBrowser, showExportMenu, socialComingSoon, xPanelOpen, sourcePanelOpen]);
+    }, [showMobileMenu, showTutorial, showChunkBrowser, showExportMenu, sourcePanelOpen]);
     var validateApiKey = function(key) {
       if (!key) {
         setApiKeyStatus("none");
@@ -2625,28 +2608,6 @@
       "button",
       {
         onClick: function() {
-          setSocialComingSoon("");
-          setXPanelOpen(!xPanelOpen);
-          setShowMobileMenu(false);
-        },
-        style: {
-          display: "block",
-          width: "100%",
-          padding: "14px 16px",
-          border: "none",
-          backgroundColor: "transparent",
-          color: theme.text,
-          fontSize: "14px",
-          cursor: "pointer",
-          textAlign: "left",
-          borderBottom: "1px solid " + theme.border
-        }
-      },
-      "\u{1F426} Frag auf X"
-    ), /* @__PURE__ */ import_react.default.createElement(
-      "button",
-      {
-        onClick: function() {
           setTutorialStep(0);
           setShowTutorial(true);
           setShowMobileMenu(false);
@@ -3385,184 +3346,7 @@
         style: { color: theme.primary, fontSize: "10px", textDecoration: "underline" }
       },
       "Aktuelle Preise"
-    )), /* @__PURE__ */ import_react.default.createElement("div", { style: { textAlign: "center", fontSize: "10px", color: theme.mutedText, marginTop: "4px" } }, "Ein unabh\xE4ngiger Leitfaden. Claude ist eine Marke von Anthropic PBC.")), /* @__PURE__ */ import_react.default.createElement("div", { style: {
-      position: "fixed",
-      right: xPanelOpen ? "308px" : "8px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      display: isMobile ? "none" : "flex",
-      flexDirection: "column",
-      gap: "8px",
-      zIndex: 10001,
-      transition: "right 0.3s ease"
-    } }, /* @__PURE__ */ import_react.default.createElement(
-      "div",
-      {
-        onClick: function() {
-          setSocialComingSoon("");
-          setXPanelOpen(!xPanelOpen);
-        },
-        title: "Frag auf X",
-        style: {
-          width: "44px",
-          height: "44px",
-          borderRadius: "50%",
-          backgroundColor: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          border: xPanelOpen ? "2px solid " + theme.primary : "2px solid transparent"
-        }
-      },
-      /* @__PURE__ */ import_react.default.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "#000000" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }))
-    ), /* @__PURE__ */ import_react.default.createElement(
-      "div",
-      {
-        onClick: function() {
-          setXPanelOpen(false);
-          setSocialComingSoon(socialComingSoon === "wa" ? "" : "wa");
-        },
-        title: "WhatsApp (bald verf\xFCgbar)",
-        style: {
-          width: "44px",
-          height: "44px",
-          borderRadius: "50%",
-          backgroundColor: "#25D366",
-          color: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          fontSize: "22px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-          border: socialComingSoon === "wa" ? "2px solid " + theme.primary : "2px solid transparent"
-        }
-      },
-      /* @__PURE__ */ import_react.default.createElement("svg", { width: "24", height: "24", viewBox: "0 0 24 24", fill: "#ffffff" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.96 7.96 0 01-4.108-1.14l-.292-.175-3.04.797.81-2.957-.192-.304A7.963 7.963 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" }))
-    ), /* @__PURE__ */ import_react.default.createElement(
-      "div",
-      {
-        onClick: function() {
-          setXPanelOpen(false);
-          setSocialComingSoon(socialComingSoon === "tg" ? "" : "tg");
-        },
-        title: "Telegram (bald verf\xFCgbar)",
-        style: {
-          width: "44px",
-          height: "44px",
-          borderRadius: "50%",
-          backgroundColor: "#0088cc",
-          color: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          fontSize: "22px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-          border: socialComingSoon === "tg" ? "2px solid " + theme.primary : "2px solid transparent"
-        }
-      },
-      /* @__PURE__ */ import_react.default.createElement("svg", { width: "22", height: "22", viewBox: "0 0 24 24", fill: "#ffffff" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z" }))
-    )), socialComingSoon && !isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: {
-      position: "fixed",
-      right: "40px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-      border: "1px solid " + theme.border,
-      borderRadius: "12px",
-      padding: "20px",
-      zIndex: 10002,
-      maxWidth: "220px",
-      textAlign: "center",
-      boxShadow: "-4px 0 20px rgba(0,0,0,0.15)"
-    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "28px", marginBottom: "8px" } }, socialComingSoon === "wa" ? "\u{1F4AC}" : "\u2708\uFE0F"), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "14px", fontWeight: 700, color: theme.text, marginBottom: "4px" } }, socialComingSoon === "wa" ? "WhatsApp" : "Telegram"), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, lineHeight: 1.5 } }, "Demn\xE4chst verf\xFCgbar! Hier kannst du bald deine Fragen direkt per " + (socialComingSoon === "wa" ? "WhatsApp" : "Telegram") + " stellen."), /* @__PURE__ */ import_react.default.createElement(
-      "button",
-      {
-        onClick: function() {
-          setSocialComingSoon("");
-        },
-        style: {
-          marginTop: "12px",
-          padding: "6px 16px",
-          borderRadius: "8px",
-          border: "1px solid " + theme.border,
-          backgroundColor: "transparent",
-          color: theme.mutedText,
-          fontSize: "12px",
-          cursor: "pointer"
-        }
-      },
-      "OK"
-    )), /* @__PURE__ */ import_react.default.createElement("div", { style: {
-      position: "fixed",
-      right: xPanelOpen ? "0px" : isMobile ? "-100%" : "-300px",
-      top: 0,
-      width: isMobile ? "100%" : "300px",
-      height: "100%",
-      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-      borderLeft: isMobile ? "none" : "1px solid " + theme.border,
-      zIndex: 1e4,
-      display: "flex",
-      flexDirection: "column",
-      transition: "right 0.3s ease",
-      boxShadow: xPanelOpen ? "-4px 0 20px rgba(0,0,0,0.2)" : "none"
-    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { padding: "16px", borderBottom: "1px solid " + theme.border, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontWeight: 700, fontSize: "15px", color: theme.text } }, "Frag Cowan auf X"), /* @__PURE__ */ import_react.default.createElement(
-      "button",
-      {
-        onClick: function() {
-          setXPanelOpen(false);
-        },
-        style: { background: "none", border: "none", color: theme.mutedText, fontSize: "18px", cursor: "pointer", fontWeight: 700 }
-      },
-      "x"
-    )), /* @__PURE__ */ import_react.default.createElement("div", { style: { padding: "16px", flex: 1, display: "flex", flexDirection: "column", gap: "12px" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, lineHeight: 1.5 } }, "Schreibe deine Frage und poste sie auf X. Die Community und @Thiburg helfen dir weiter!"), /* @__PURE__ */ import_react.default.createElement(
-      "textarea",
-      {
-        value: xInput,
-        onChange: function(e) {
-          setXInput(e.target.value);
-        },
-        placeholder: "Deine Frage an Cowan...",
-        style: {
-          flex: 1,
-          padding: "12px",
-          borderRadius: "8px",
-          border: "1px solid " + theme.border,
-          backgroundColor: theme.inputBg,
-          color: theme.inputText,
-          fontSize: "13px",
-          resize: "none",
-          outline: "none",
-          minHeight: "120px",
-          lineHeight: 1.5
-        }
-      }
-    ), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "11px", color: theme.mutedText } }, 280 - ("@Thiburg ".length + (xInput || "").length + " #AgenticAuthorship #OpenClaw".length) + " Zeichen verbleibend"), /* @__PURE__ */ import_react.default.createElement(
-      "a",
-      {
-        href: "https://twitter.com/intent/tweet?text=" + encodeURIComponent("@Thiburg " + (xInput || "Meine Frage an Cowan") + " #AgenticAuthorship #OpenClaw"),
-        target: "_blank",
-        rel: "noopener noreferrer",
-        style: {
-          display: "block",
-          padding: "12px",
-          borderRadius: "8px",
-          border: "none",
-          backgroundColor: "#1d9bf0",
-          color: "#ffffff",
-          fontSize: "14px",
-          fontWeight: 600,
-          textAlign: "center",
-          textDecoration: "none",
-          cursor: xInput.trim() ? "pointer" : "not-allowed",
-          opacity: xInput.trim() ? 1 : 0.5
-        }
-      },
-      "Auf X posten"
-    ))), showTutorial && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+    )), /* @__PURE__ */ import_react.default.createElement("div", { style: { textAlign: "center", fontSize: "10px", color: theme.mutedText, marginTop: "4px" } }, "Ein unabh\xE4ngiger Leitfaden. Claude ist eine Marke von Anthropic PBC.")), showTutorial && /* @__PURE__ */ import_react.default.createElement("div", { style: {
       position: "fixed",
       top: 0,
       left: 0,
