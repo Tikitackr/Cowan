@@ -1190,22 +1190,22 @@
         text: 'Ich bin dein KI-Wissensassistent zum Buch "Agentic Authorship". Ich kenne das Buch in- und auswendig und helfe dir bei Fragen zu OpenClaw, Claude und mehr.'
       },
       {
-        icon: "\u{1F511}",
+        icon: "key",
         title: "API-Key eingeben",
         text: 'Um mit mir zu chatten, brauchst du einen Claude API-Key von console.anthropic.com. Trage ihn oben ein und klicke auf "Pr\xFCfen". Keine Sorge, der Key bleibt nur in deinem Browser.'
       },
       {
-        icon: "\u{1F4AC}",
+        icon: "chat",
         title: "Frag mich etwas!",
         text: "Nutze die Beispielfragen oder tippe deine eigene Frage ein. Ich antworte basierend auf der Wissensbasis des Buches und zeige dir die verwendeten Quellen."
       },
       {
-        icon: "\u{1F4DA}",
+        icon: "book",
         title: "Wissensbasis entdecken",
-        text: 'Klicke oben auf "\u{1F4DA} Wissen", um alle 8 Wissensbausteine des Buches zu durchbl\xE4ttern \u2013 ganz ohne Frage zu stellen. So bekommst du einen \xDCberblick \xFCber alle Themen.'
+        text: 'Klicke oben auf "Wissen", um alle Wissensbausteine des Buches zu durchbl\xE4ttern \u2013 ganz ohne Frage zu stellen. So bekommst du einen \xDCberblick \xFCber alle Themen.'
       },
       {
-        icon: "\u{1F511}",
+        icon: "key",
         title: "API-Key holen",
         text: "Besuche console.anthropic.com, erstelle einen Account und generiere deinen API-Key. Der Key bleibt nur in deinem Browser \u2013 sicher und privat."
       }
@@ -2309,7 +2309,7 @@
         }
       },
       "\u{1F4DD} Als Text speichern"
-    ))), /* @__PURE__ */ import_react.default.createElement(
+    ))), !isCompanionMode && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -2511,7 +2511,7 @@
       borderBottom: "1px solid " + theme.border,
       display: "flex",
       gap: "12px"
-    } }, /* @__PURE__ */ import_react.default.createElement("span", null, "Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /* @__PURE__ */ import_react.default.createElement("span", null, "$" + totalCost.toFixed(4))), /* @__PURE__ */ import_react.default.createElement(
+    } }, /* @__PURE__ */ import_react.default.createElement("span", null, "Tokens: " + (totalTokens.input + totalTokens.output).toLocaleString("de-DE")), /* @__PURE__ */ import_react.default.createElement("span", null, "$" + totalCost.toFixed(4))), !isCompanionMode && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3371,7 +3371,16 @@
       border: "1px solid " + (darkMode ? "rgba(217,119,6,0.15)" : "rgba(217,119,6,0.1)"),
       boxShadow: darkMode ? "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 1px rgba(217,119,6,0.08)" : "0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)",
       animation: "fadeInUp 0.3s cubic-bezier(0.4,0,0.2,1)"
-    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "48px", marginBottom: "16px" } }, tutorialSteps[tutorialStep].icon === "openclaw" ? /* @__PURE__ */ import_react.default.createElement(CowanIcon, { size: 48 }) : tutorialSteps[tutorialStep].icon), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: theme.text, marginBottom: "8px" } }, tutorialSteps[tutorialStep].title), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "13px", color: theme.mutedText, lineHeight: 1.6, marginBottom: "24px" } }, tutorialSteps[tutorialStep].text), /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", justifyContent: "center", gap: "6px", marginBottom: "20px" } }, tutorialSteps.map(function(_, si) {
+    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      width: "56px",
+      height: "56px",
+      borderRadius: "16px",
+      background: darkMode ? "rgba(217,119,6,0.12)" : "rgba(217,119,6,0.08)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      margin: "0 auto 16px"
+    } }, tutorialSteps[tutorialStep].icon === "openclaw" && /* @__PURE__ */ import_react.default.createElement(CowanIcon, { size: 32 }), tutorialSteps[tutorialStep].icon === "key" && /* @__PURE__ */ import_react.default.createElement("svg", { width: "28", height: "28", viewBox: "0 0 24 24", fill: "none", stroke: "#d97706", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" })), tutorialSteps[tutorialStep].icon === "chat" && /* @__PURE__ */ import_react.default.createElement("svg", { width: "28", height: "28", viewBox: "0 0 24 24", fill: "none", stroke: "#d97706", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "8", y1: "9", x2: "16", y2: "9" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "8", y1: "13", x2: "12", y2: "13" })), tutorialSteps[tutorialStep].icon === "book" && /* @__PURE__ */ import_react.default.createElement("svg", { width: "28", height: "28", viewBox: "0 0 24 24", fill: "none", stroke: "#d97706", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "8", y1: "7", x2: "16", y2: "7" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "8", y1: "11", x2: "13", y2: "11" }))), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: theme.text, marginBottom: "8px" } }, tutorialSteps[tutorialStep].title), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "13px", color: theme.mutedText, lineHeight: 1.6, marginBottom: "24px" } }, tutorialSteps[tutorialStep].text), /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", justifyContent: "center", gap: "6px", marginBottom: "20px" } }, tutorialSteps.map(function(_, si) {
       return /* @__PURE__ */ import_react.default.createElement("div", { key: si, style: {
         width: si === tutorialStep ? "20px" : "8px",
         height: "8px",
