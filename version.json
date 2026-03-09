@@ -1,6 +1,6 @@
 {
-  "version": "5.8.0",
-  "date": "2026-03-08",
-  "message": "Standalone-App bekommt Companion-Design: Schnellaktionen-Screen, Zurueck-Button, Reset kehrt zu Aktionen zurueck.",
+  "version": "5.10.0",
+  "date": "2026-03-09",
+  "message": "Voice-Orb Screen: Neuer Sprach-Modus mit pulsierendem Amber-Orb (ChatGPT Voice Mode Style). Eigener Screen statt Chat-Ansicht. Orb reagiert auf Stimme (Waveform-Daten), TTS-Antworten mit anderer Puls-Animation, Auto-Mikrofon bei Rueckfragen, Transkript-Uebernahme in Chat-Verlauf.",
   "url": "https://tikitackr.github.io/Cowan/"
 }

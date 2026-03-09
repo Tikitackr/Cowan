@@ -93,7 +93,7 @@
     "claude-haiku-4-5-20251001": { input: 1 / 1e6, output: 5 / 1e6, label: "Haiku 4.5" },
     "claude-sonnet-4-5-20250929": { input: 3 / 1e6, output: 15 / 1e6, label: "Sonnet 4.5" }
   };
-  var COWAN_APP_VERSION = "5.8.0";
+  var COWAN_APP_VERSION = "5.10.0";
   var COWAN_VERSION_CHECK_URL = "https://tikitackr.github.io/Cowan/version.json";
   var OPENCLAW_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%"><defs><linearGradient id="hummerGrad" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#fbbf24" stop-opacity="0.9"/><stop offset="50%" stop-color="#f59e0b" stop-opacity="0.8"/><stop offset="100%" stop-color="#d97706" stop-opacity="0.65"/></linearGradient></defs><path fill="url(#hummerGrad)" d="m166.5 52.5q3.5 0 7 0 2.75 2.99 1.5 7-21.27 45.61-20.5 96 39.99 2.76 72 26.5 7.87 6.86 13.5 15.5 42.88-56.39 103.5-92.5 47.35-25.46 101-25 14.52 0.38 23.5 11.5 3.19 7.74 2 16-1.81 7.18-4.5 14-1 0-1 1-5.04 6.05-9 13-1 0-1 1 0 0.5 0 1-12.42 12.15-28.5 19-6.02 36.27-41.5 45-0.83 2.75 0 5 19.02-12.85 41.5-9 10.85-8.09 23.5-13 15.01-6.37 31-2.5 14.09 7.43 14 23.5-2.83 23.25-15.5 43-6.42 9.92-14 19-10.04 8.8-19.5 18-72.02 48.88-156.5 27-19.63 9.6-41.5 10.5-4.59 1.27-9 3 2 1 4 2 20.09-1.11 35 12 25.46 6.95 37.5 30.5 1.26 5.69-1 11-3.38 3.79-7.5 6.5 5.74 10.07 1.5 20.5-7.55 7.47-17.5 3.5-11.01-5.34-22.5-9.5-18.26 10-38.5 13-15.5 0-31 0-26.62-4.54-51-17-4.17 1.33-8 3.5-7.23 5.87-15 11-8.62 2.58-13.5-4.5-1.82 2.32-4.5 3.5-6.06 2.24-12 3.5-7.5 0-15 0-27.42-2.56-50-18.5-18-17.25-23-41.5 0-11.5 0-23 4.12-22.7 25-33 6.95-16.67 22-26.5-20.39-20.8-14.5-49.5 7.01-26.98 28.5-44.5 7.56-5.27 15-10.5-13.09-30.88-7.5-64 3.16-15.57 14.5-26.5 6.85-2.48 8 4.5-6.59 39.53 11 75.5 7.99-0.49 16-2 2.42-34.57 14.5-67.5 8.51-22.23 27.5-36z"/><path fill="#b45309" opacity="0.45" d="m113.5 401.5q0.48-5.1-1-10-0.91 0.19-1 1-2.46 1.74-5 3.5 5.65 9.54-5 13-32.21 5.55-61-10-32.89-23.11-29.5-63.5 2.96-22.67 23.5-32 7.99-19.75 27-29.5-27.65-23.7-15.5-58.5 7.33-16.82 20.5-29.5 10.79-8.14 22-15.5-16.49-37.08-5.5-76 3.19-6.13 7.5-11.5 1.48-0.89 2 1-5.69 41.09 12.5 78.5 1 1 2 2 9.97-3.24 20.5-4 2 0 4 0 0-7.5 0-15 0.99-42.22 24.5-77 6.12-7.12 14-12-4.65 13.43-10 27-11.93 37.6-9.5 77 49.38 0.7 83.5 36 2.75 4.5 5.5 9 38.99-52.24 93-88.5 45.84-29.03 100-32.5 15.69-1.56 29 6.5 5.68 7.29 3.5 16.5-10.38 33.62-43.5 45-4.39 37.33-41 45-0.79 8.63-6 15.5 1.91 1.83 4.5 2.5 22.27-17.25 50.5-14.5 12.93-9.41 28-15 36.22-8.28 31.5 28.5-15.19 51.69-62.5 77.5-65.92 35.87-138 15.5-19.67 10.42-42 10.5-8.39 2.88-17 5 3.58 6.08 10 9 20.92-1.14 36 13 22.67 5.23 34.5 25.5 3.33 7.13-3.5 11.5-3.88 1.8-8 3 7.36 8.45 6.5 19.5-4.43 5.66-11.5 3.5-12.84-5.67-26-10.5-39.4 21.02-83 10.5-18.85-5.78-36.5-14.5-13.65 4.14-23.5 14.5-9.51 3.74-11-6.5z"/></svg>';
   var CowanIcon = ({ size = 20 }) => /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-block", width: size, height: size, flexShrink: 0 }, dangerouslySetInnerHTML: { __html: OPENCLAW_SVG } });
@@ -1072,6 +1072,10 @@
     var _chatEntryMode = (0, import_react2.useState)(null);
     var chatEntryMode = _chatEntryMode[0];
     var setChatEntryMode = _chatEntryMode[1];
+    var _voiceOrbState = (0, import_react2.useState)("idle");
+    var voiceOrbState = _voiceOrbState[0];
+    var setVoiceOrbState = _voiceOrbState[1];
+    var voiceMessagesRef = (0, import_react2.useRef)([]);
     var _companionProgress = (0, import_react2.useState)({ totalChapters: 15, completedChapters: [], currentChapter: 1, currentStep: 1, overallPercent: 0 });
     var companionProgress = _companionProgress[0];
     var setCompanionProgress = _companionProgress[1];
@@ -1622,7 +1626,22 @@
           }
           return copy;
         });
-        if (conversationMode && ttsSupported) {
+        var inVoiceMode = currentView === "voice";
+        if (inVoiceMode) {
+          var cleanText = fullText.replace(/---QUELLEN---[\s\S]*?---QUELLEN-ENDE---/g, "").trim();
+          voiceMessagesRef.current.push({ role: "assistant", content: cleanText });
+          setVoiceOrbState("speaking");
+          speak(cleanText, function() {
+            if (isFollowUpQuestion(cleanText) && speechSupported) {
+              setVoiceOrbState("listening");
+              setTimeout(function() {
+                startListening();
+              }, 400);
+            } else {
+              setVoiceOrbState("idle");
+            }
+          });
+        } else if (conversationMode && ttsSupported) {
           var ttsText = fullText.replace(/---QUELLEN---[\s\S]*?---QUELLEN-ENDE---/g, "").trim();
           speak(ttsText, function() {
             if (isFollowUpQuestion(ttsText) && speechSupported) {
@@ -2215,7 +2234,7 @@
       WebkitTapHighlightColor: "transparent"
     };
     var btnDisabled = Object.assign({}, btnPrimary, { opacity: 0.4, cursor: "not-allowed" });
-    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 8px rgba(217,119,6,0); } } @keyframes waveIdle { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } } @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } } @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 4px rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 12px rgba(34,197,94,0.6); } }" } }), /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "10px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 500 500", style: {
+    return /* @__PURE__ */ import_react.default.createElement("div", { style: containerStyle }, /* @__PURE__ */ import_react.default.createElement("div", { style: headerStyle }, /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes lobsterWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 8px rgba(217,119,6,0); } } @keyframes waveIdle { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } } @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } } @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 4px rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 12px rgba(34,197,94,0.6); } } @keyframes voiceOrbIdle { 0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(217,119,6,0.2), 0 0 80px rgba(217,119,6,0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 50px rgba(217,119,6,0.25), 0 0 90px rgba(217,119,6,0.12); } } @keyframes voiceOrbListening { 0%, 100% { transform: scale(1); box-shadow: 0 0 50px rgba(217,119,6,0.35), 0 0 100px rgba(217,119,6,0.15); } 50% { transform: scale(1.08); box-shadow: 0 0 70px rgba(217,119,6,0.5), 0 0 120px rgba(217,119,6,0.2); } } @keyframes voiceOrbSpeaking { 0%, 100% { transform: scale(1); box-shadow: 0 0 50px rgba(245,158,11,0.3), 0 0 100px rgba(245,158,11,0.12); } 50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(245,158,11,0.4), 0 0 110px rgba(245,158,11,0.18); } } @keyframes voiceOrbRing { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }" } }), /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "10px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 500 500", style: {
       width: isMobile ? "28px" : "32px",
       height: isMobile ? "28px" : "32px",
       flexShrink: 0,
@@ -2799,10 +2818,9 @@
         playTick();
         if (speechSupported) {
           setChatEntryMode("voice");
-          setCurrentView("chat");
-          setTimeout(function() {
-            startListening();
-          }, 300);
+          setVoiceOrbState("idle");
+          voiceMessagesRef.current = [];
+          setCurrentView("voice");
         } else {
           setError("Spracherkennung wird von diesem Browser nicht unterst\xFCtzt.");
         }
@@ -2922,7 +2940,213 @@
       background: "linear-gradient(90deg, #d97706, #f59e0b)",
       transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
       boxShadow: companionProgress.overallPercent > 0 ? "0 0 8px rgba(217,119,6,0.4)" : "none"
-    } })), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px" } }, companionProgress.completedChapters.length, " von ", companionProgress.totalChapters, " Kapiteln")))), /* @__PURE__ */ import_react.default.createElement("div", { style: { flex: 1, overflowY: "auto", padding: isMobile ? "10px 8px" : "16px", minHeight: 0, WebkitOverflowScrolling: "touch", display: currentView === "actions" ? "none" : "block" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: innerMax }, messages.map(function(msg, i) {
+    } })), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px" } }, companionProgress.completedChapters.length, " von ", companionProgress.totalChapters, " Kapiteln")))), currentView === "voice" && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px 16px",
+      minHeight: 0,
+      position: "relative",
+      background: darkMode ? "radial-gradient(ellipse at center, rgba(217,119,6,0.06) 0%, rgba(15,23,42,0) 70%)" : "radial-gradient(ellipse at center, rgba(217,119,6,0.04) 0%, rgba(248,250,252,0) 70%)"
+    } }, /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        onClick: function() {
+          playTick();
+          if (isListening) stopListening();
+          if (isSpeaking) stopSpeaking();
+          setVoiceOrbState("idle");
+          if (voiceMessagesRef.current.length > 0) {
+            setMessages(function(prev) {
+              return prev.concat(voiceMessagesRef.current);
+            });
+            voiceMessagesRef.current = [];
+          }
+          setChatEntryMode(null);
+          setCurrentView("actions");
+        },
+        style: {
+          position: "absolute",
+          top: "16px",
+          left: "16px",
+          background: "none",
+          border: "none",
+          color: theme.primary,
+          cursor: "pointer",
+          fontSize: "13px",
+          fontWeight: 600,
+          padding: "4px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "transform 0.15s cubic-bezier(0.4,0,0.2,1)",
+          WebkitTapHighlightColor: "transparent",
+          zIndex: 10
+        },
+        onTouchStart: function(e) {
+          e.currentTarget.style.transform = "scale(0.95)";
+        },
+        onTouchEnd: function(e) {
+          e.currentTarget.style.transform = "scale(1)";
+        }
+      },
+      /* @__PURE__ */ import_react.default.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M19 12H5" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M12 19l-7-7 7-7" })),
+      "\xD7"
+    ), /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative", width: "180px", height: "180px", display: "flex", alignItems: "center", justifyContent: "center" } }, (voiceOrbState === "listening" || voiceOrbState === "speaking") && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      borderRadius: "50%",
+      border: "2px solid " + (voiceOrbState === "listening" ? "rgba(217,119,6,0.4)" : "rgba(245,158,11,0.3)"),
+      animation: "voiceOrbRing 2s ease-out infinite"
+    } }), (voiceOrbState === "listening" || voiceOrbState === "speaking") && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      borderRadius: "50%",
+      border: "2px solid " + (voiceOrbState === "listening" ? "rgba(217,119,6,0.3)" : "rgba(245,158,11,0.2)"),
+      animation: "voiceOrbRing 2s ease-out infinite 0.6s"
+    } }), /* @__PURE__ */ import_react.default.createElement(
+      "button",
+      {
+        onClick: function() {
+          playTick();
+          if (voiceOrbState === "idle") {
+            setVoiceOrbState("listening");
+            setTimeout(function() {
+              startListening();
+            }, 200);
+          } else if (voiceOrbState === "listening") {
+            var voiceText = collectedTranscriptRef.current || speechTranscript;
+            if (voiceText && voiceText.trim()) {
+              setVoiceOrbState("thinking");
+              voiceMessagesRef.current.push({ role: "user", content: voiceText.trim() });
+              sendMessage();
+            } else {
+              stopListening();
+              setVoiceOrbState("idle");
+            }
+          } else if (voiceOrbState === "speaking") {
+            stopSpeaking();
+            setVoiceOrbState("idle");
+          }
+        },
+        style: {
+          width: (function() {
+            var baseSize = 140;
+            if (voiceOrbState === "listening" && waveformData.length > 0) {
+              var avg = 0;
+              for (var wi = 0; wi < waveformData.length; wi++) avg += waveformData[wi] || 0;
+              avg = avg / Math.max(waveformData.length, 1);
+              return baseSize + avg * 30;
+            }
+            if (voiceOrbState === "speaking" && waveformData.length > 0) {
+              var avg2 = 0;
+              for (var wi2 = 0; wi2 < waveformData.length; wi2++) avg2 += waveformData[wi2] || 0;
+              avg2 = avg2 / Math.max(waveformData.length, 1);
+              return baseSize + avg2 * 20;
+            }
+            return baseSize;
+          })() + "px",
+          height: (function() {
+            var baseSize = 140;
+            if (voiceOrbState === "listening" && waveformData.length > 0) {
+              var avg = 0;
+              for (var wi = 0; wi < waveformData.length; wi++) avg += waveformData[wi] || 0;
+              avg = avg / Math.max(waveformData.length, 1);
+              return baseSize + avg * 30;
+            }
+            if (voiceOrbState === "speaking" && waveformData.length > 0) {
+              var avg2 = 0;
+              for (var wi2 = 0; wi2 < waveformData.length; wi2++) avg2 += waveformData[wi2] || 0;
+              avg2 = avg2 / Math.max(waveformData.length, 1);
+              return baseSize + avg2 * 20;
+            }
+            return baseSize;
+          })() + "px",
+          borderRadius: "50%",
+          border: "none",
+          cursor: "pointer",
+          background: voiceOrbState === "speaking" ? "radial-gradient(circle at 40% 40%, #fbbf24 0%, #f59e0b 30%, #d97706 60%, #b45309 100%)" : "radial-gradient(circle at 40% 40%, #f59e0b 0%, #d97706 40%, #b45309 70%, #92400e 100%)",
+          animation: voiceOrbState === "listening" ? "voiceOrbListening 1.2s ease-in-out infinite" : voiceOrbState === "speaking" ? "voiceOrbSpeaking 1.8s ease-in-out infinite" : voiceOrbState === "thinking" ? "voiceOrbListening 0.8s ease-in-out infinite" : "voiceOrbIdle 3s ease-in-out infinite",
+          transition: "width 0.15s ease-out, height 0.15s ease-out, background 0.3s ease",
+          WebkitTapHighlightColor: "transparent",
+          position: "relative",
+          zIndex: 2,
+          /* Glass-Kante oben */
+          boxShadow: voiceOrbState === "idle" ? "0 0 40px rgba(217,119,6,0.2), 0 0 80px rgba(217,119,6,0.1), inset 0 -20px 40px rgba(0,0,0,0.2), inset 0 10px 20px rgba(255,255,255,0.15)" : "0 0 60px rgba(217,119,6,0.35), 0 0 100px rgba(217,119,6,0.15), inset 0 -20px 40px rgba(0,0,0,0.2), inset 0 10px 20px rgba(255,255,255,0.15)"
+        },
+        onTouchStart: function(e) {
+          e.currentTarget.style.transform = "scale(0.95)";
+        },
+        onTouchEnd: function(e) {
+          e.currentTarget.style.transform = "scale(1)";
+        }
+      },
+      voiceOrbState === "idle" && /* @__PURE__ */ import_react.default.createElement("svg", { width: "48", height: "48", viewBox: "0 0 24 24", fill: "none", stroke: "rgba(255,255,255,0.9)", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M19 10v2a7 7 0 0 1-14 0v-2" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "12", y1: "19", x2: "12", y2: "23" }), /* @__PURE__ */ import_react.default.createElement("line", { x1: "8", y1: "23", x2: "16", y2: "23" })),
+      voiceOrbState === "listening" && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "3px", height: "48px" } }, Array(12).fill(0).map(function(_, bi) {
+        var val = waveformData[Math.floor(bi * WAVEFORM_BARS / 12)] || 0;
+        var h = 8 + val * 32;
+        return import_react.default.createElement("div", { key: bi, style: {
+          width: "3px",
+          height: h + "px",
+          borderRadius: "2px",
+          backgroundColor: "rgba(255,255,255,0.85)",
+          transition: "height 0.1s ease-out"
+        } });
+      })),
+      voiceOrbState === "thinking" && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "6px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.8)", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.8)", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.2s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.8)", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.4s" } })),
+      voiceOrbState === "speaking" && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "3px", height: "48px" } }, Array(12).fill(0).map(function(_, bi) {
+        var val = waveformData[Math.floor(bi * WAVEFORM_BARS / 12)] || 0;
+        var h = 6 + val * 28;
+        return import_react.default.createElement("div", { key: bi, style: {
+          width: "3px",
+          height: h + "px",
+          borderRadius: "2px",
+          backgroundColor: "rgba(255,255,255,0.8)",
+          transition: "height 0.12s ease-out"
+        } });
+      }))
+    )), /* @__PURE__ */ import_react.default.createElement("div", { style: { marginTop: "28px", textAlign: "center" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      fontSize: "16px",
+      fontWeight: 600,
+      color: theme.text,
+      animation: "fadeInUp 0.3s ease-out"
+    } }, voiceOrbState === "idle" && "Tippe zum Sprechen", voiceOrbState === "listening" && "Ich h\xF6re zu...", voiceOrbState === "thinking" && "Cowan denkt nach...", voiceOrbState === "speaking" && "Cowan spricht..."), voiceOrbState === "listening" && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px" } }, "Tippe auf den Orb zum Senden"), voiceOrbState === "speaking" && /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px" } }, "Tippe zum Stoppen")), (speechTranscript || voiceOrbState === "listening" && collectedTranscriptRef.current) && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      marginTop: "20px",
+      padding: "12px 16px",
+      borderRadius: "16px",
+      maxWidth: "340px",
+      width: "100%",
+      backgroundColor: theme.glassCardBg,
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      border: "1px solid " + theme.glassCardBorder,
+      fontSize: "14px",
+      color: theme.text,
+      textAlign: "center",
+      lineHeight: 1.5
+    } }, speechTranscript || collectedTranscriptRef.current), voiceOrbState === "idle" && voiceMessagesRef.current.length > 0 && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+      marginTop: "16px",
+      padding: "12px 16px",
+      borderRadius: "16px",
+      maxWidth: "340px",
+      width: "100%",
+      backgroundColor: darkMode ? "rgba(30,41,59,0.6)" : "rgba(255,251,235,0.7)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      border: "1px solid " + theme.glassCardBorder,
+      fontSize: "13px",
+      color: theme.text,
+      lineHeight: 1.5
+    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" } }, /* @__PURE__ */ import_react.default.createElement(CowanIcon, { size: 14 }), /* @__PURE__ */ import_react.default.createElement("span", { style: { fontSize: "11px", fontWeight: 600, color: theme.mutedText } }, "Cowan")), /* @__PURE__ */ import_react.default.createElement("div", { dangerouslySetInnerHTML: { __html: renderMarkdown(
+      (function() {
+        var last = voiceMessagesRef.current[voiceMessagesRef.current.length - 1];
+        return last && last.role === "assistant" ? last.content : "";
+      })()
+    ) } }))), /* @__PURE__ */ import_react.default.createElement("div", { style: { flex: 1, overflowY: "auto", padding: isMobile ? "10px 8px" : "16px", minHeight: 0, WebkitOverflowScrolling: "touch", display: currentView === "chat" ? "block" : "none" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: innerMax }, messages.map(function(msg, i) {
       var isAssistant = msg.role === "assistant";
       return /* @__PURE__ */ import_react.default.createElement("div", { key: i, style: {
         display: "flex",
@@ -2998,7 +3222,7 @@
       display: "flex",
       alignItems: "center",
       gap: "8px"
-    } }, /* @__PURE__ */ import_react.default.createElement(CowanIcon, { size: 18 }), /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" } }, "Cowan denkt nach", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-flex", gap: "3px", marginLeft: "2px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.2s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.4s" } }))), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes cowanDot { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }" } }))), /* @__PURE__ */ import_react.default.createElement("div", { ref: chatEndRef }))), messageCount >= 10 && /* @__PURE__ */ import_react.default.createElement("div", { style: { textAlign: "center", padding: isMobile ? "4px 8px" : "4px 16px", fontSize: isMobile ? "10px" : "11px", color: darkMode ? "#eab308" : "#d97706" } }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), pendingImage && /* @__PURE__ */ import_react.default.createElement("div", { style: { borderTop: "1px solid " + theme.glassBorder, padding: isMobile ? "6px 8px" : "8px 16px", backgroundColor: theme.glassBg, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", flexShrink: 0 } }, /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", alignItems: "center", gap: "8px" }) }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative", flexShrink: 0 } }, /* @__PURE__ */ import_react.default.createElement(
+    } }, /* @__PURE__ */ import_react.default.createElement(CowanIcon, { size: 18 }), /* @__PURE__ */ import_react.default.createElement("span", { style: { color: theme.mutedText, fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" } }, "Cowan denkt nach", /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "inline-flex", gap: "3px", marginLeft: "2px" } }, /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.2s" } }), /* @__PURE__ */ import_react.default.createElement("span", { style: { width: "5px", height: "5px", borderRadius: "50%", backgroundColor: theme.primary, display: "inline-block", animation: "cowanDot 1.4s infinite ease-in-out", animationDelay: "0.4s" } }))), /* @__PURE__ */ import_react.default.createElement("style", { dangerouslySetInnerHTML: { __html: "@keyframes cowanDot { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }" } }))), /* @__PURE__ */ import_react.default.createElement("div", { ref: chatEndRef }))), currentView === "chat" && messageCount >= 10 && /* @__PURE__ */ import_react.default.createElement("div", { style: { textAlign: "center", padding: isMobile ? "4px 8px" : "4px 16px", fontSize: isMobile ? "10px" : "11px", color: darkMode ? "#eab308" : "#d97706" } }, isMobile ? messageCount + " Nachrichten - neue Konversation spart Kosten" : "Dein Chat-Verlauf umfasst bereits " + messageCount + " Nachrichten. Starte eine neue Konversation, um Kosten zu sparen."), currentView === "chat" && pendingImage && /* @__PURE__ */ import_react.default.createElement("div", { style: { borderTop: "1px solid " + theme.glassBorder, padding: isMobile ? "6px 8px" : "8px 16px", backgroundColor: theme.glassBg, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", flexShrink: 0 } }, /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", alignItems: "center", gap: "8px" }) }, /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative", flexShrink: 0 } }, /* @__PURE__ */ import_react.default.createElement(
       "img",
       {
         src: "data:" + pendingImage.mimeType + ";base64," + pendingImage.base64,
@@ -3068,7 +3292,7 @@
       backgroundColor: theme.glassBg,
       backdropFilter: "blur(20px) saturate(180%)",
       WebkitBackdropFilter: "blur(20px) saturate(180%)",
-      display: currentView === "actions" ? "none" : "block"
+      display: currentView === "chat" ? "block" : "none"
     } }, /* @__PURE__ */ import_react.default.createElement(
       "input",
       {
@@ -3079,7 +3303,7 @@
         style: { display: "none" },
         onChange: handleImageSelect
       }
-    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end", position: "relative" }) }, chatEntryMode !== "type" && /* @__PURE__ */ import_react.default.createElement(
+    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end", position: "relative" }) }, !chatEntryMode && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3116,7 +3340,7 @@
         }
       },
       "\u{1F4F7}"
-    ), chatEntryMode !== "type" && speechSupported && /* @__PURE__ */ import_react.default.createElement(
+    ), !chatEntryMode && speechSupported && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3154,7 +3378,7 @@
         }
       },
       isListening ? "\u{1F534}" : "\u{1F399}\uFE0F"
-    ), chatEntryMode !== "type" && speechSupported && ttsSupported && /* @__PURE__ */ import_react.default.createElement(
+    ), !chatEntryMode && speechSupported && ttsSupported && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3192,7 +3416,7 @@
         }
       },
       conversationMode ? "\u{1F50A}" : "\u{1F507}"
-    ), chatEntryMode !== "type" && isSpeaking && /* @__PURE__ */ import_react.default.createElement(
+    ), !chatEntryMode && isSpeaking && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
