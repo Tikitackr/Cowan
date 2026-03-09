@@ -1,6 +1,6 @@
 {
-  "version": "5.12.0",
+  "version": "5.13.0",
   "date": "2026-03-09",
-  "message": "Stille-Erkennung + Auto-Send: Voice-Orb sendet automatisch nach 2s Sprechpause (kein Tippen noetig). Browser-TTS optimiert: Beste verfuegbare Stimme, natuerlichere Rate/Pitch. OpenAI TTS Architektur vorbereitet (speak()-Funktion modular).",
+  "message": "iOS TTS Fix: Stille Utterance bei User-Tap unlockt speechSynthesis fuer spaetere API-Antworten. iOS Resume-Workaround: pause/resume-Interval verhindert 15s-Timeout bei laengeren Texten. Alle TTS-relevanten Buttons (Sprachbefehl-Kachel, Voice-Orb, Gespraechs-Modus-Toggle) rufen unlockTts() auf.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
