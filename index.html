@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Cowan – Die Buch-Instanz | Agentic Authorship</title>
+  <title>Cowan – Dein Buch-Begleiter | Agentic Authorship</title>
   <meta name="description" content="KI-Wissensassistent fuer das Buch Agentic Authorship - Mit Claude und OpenClaw zur automatisierten Buchfabrik" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -1036,9 +1036,10 @@
     );
   }
   function CowanApp() {
+    var _isCompanionInit = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "companion";
     var initialMsg = {
       role: "assistant",
-      content: 'Hallo! Ich bin **Cowan**, deine Buch-Instanz fuer "Agentic Authorship". Stelle mir eine Frage zum Buch, zu OpenClaw oder Claude - ich helfe dir gerne weiter!',
+      content: _isCompanionInit ? "Was kann ich f\xFCr dich tun?" : 'Hallo! Ich bin **Cowan**, dein Buch-Begleiter f\xFCr "Agentic Authorship". Frag mich alles rund ums Buch \u2013 ich helfe dir gerne weiter!',
       isWelcome: true,
       sourceIds: []
     };
@@ -1068,6 +1069,9 @@
     var setStandaloneView = _standaloneView[1];
     var currentView = isCompanionMode ? companionView : standaloneView;
     var setCurrentView = isCompanionMode ? setCompanionView : setStandaloneView;
+    var _chatEntryMode = (0, import_react2.useState)(null);
+    var chatEntryMode = _chatEntryMode[0];
+    var setChatEntryMode = _chatEntryMode[1];
     var _companionProgress = (0, import_react2.useState)({ totalChapters: 15, completedChapters: [], currentChapter: 1, currentStep: 1, overallPercent: 0 });
     var companionProgress = _companionProgress[0];
     var setCompanionProgress = _companionProgress[1];
@@ -1778,6 +1782,7 @@
         setPendingImage({ base64, mimeType, fileName: file.name });
         setError("");
         if (currentView === "actions") {
+          setChatEntryMode("scan");
           setCurrentView("chat");
         }
       };
@@ -2084,10 +2089,10 @@
       triggerDownload(lines.join("\n"), "cowan-chat-" + ts + ".txt", "text/plain");
     };
     var exampleQuestions = [
-      "Was ist die SOUL.md?",
-      "Wie starte ich OpenClaw?",
-      "Welche Modi hat der Agent?",
-      "Wie funktioniert das Modi-Pattern?"
+      "Wie installiere ich OpenClaw?",
+      "Was brauche ich zum Starten?",
+      "Wie funktioniert das Dashboard?",
+      "Was kann der Agent f\xFCr mich tun?"
     ];
     var handleExampleClick = function(question) {
       setInput(question);
@@ -2424,7 +2429,7 @@
           e.currentTarget.style.backgroundColor = theme.glassCardBg;
         }
       },
-      darkMode ? "\u2600\uFE0F" : "\u{1F319}"
+      darkMode ? import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("circle", { cx: 12, cy: 12, r: 5 }), import_react.default.createElement("line", { x1: 12, y1: 1, x2: 12, y2: 3 }), import_react.default.createElement("line", { x1: 12, y1: 21, x2: 12, y2: 23 }), import_react.default.createElement("line", { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }), import_react.default.createElement("line", { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }), import_react.default.createElement("line", { x1: 1, y1: 12, x2: 3, y2: 12 }), import_react.default.createElement("line", { x1: 21, y1: 12, x2: 23, y2: 12 }), import_react.default.createElement("line", { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }), import_react.default.createElement("line", { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })) : import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }))
     )), isMobile && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", gap: "8px", alignItems: "center" } }, /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
@@ -2455,7 +2460,7 @@
           e.currentTarget.style.transform = "scale(1)";
         }
       },
-      darkMode ? "\u2600\uFE0F" : "\u{1F319}"
+      darkMode ? import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("circle", { cx: 12, cy: 12, r: 5 }), import_react.default.createElement("line", { x1: 12, y1: 1, x2: 12, y2: 3 }), import_react.default.createElement("line", { x1: 12, y1: 21, x2: 12, y2: 23 }), import_react.default.createElement("line", { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }), import_react.default.createElement("line", { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }), import_react.default.createElement("line", { x1: 1, y1: 12, x2: 3, y2: 12 }), import_react.default.createElement("line", { x1: 21, y1: 12, x2: 23, y2: 12 }), import_react.default.createElement("line", { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }), import_react.default.createElement("line", { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })) : import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }))
     ), /* @__PURE__ */ import_react.default.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
@@ -2488,7 +2493,7 @@
           e.currentTarget.style.transform = "scale(1)";
         }
       },
-      showMobileMenu ? "\u2715" : "\u2630"
+      showMobileMenu ? import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("line", { x1: 18, y1: 6, x2: 6, y2: 18 }), import_react.default.createElement("line", { x1: 6, y1: 6, x2: 18, y2: 18 })) : import_react.default.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, import_react.default.createElement("line", { x1: 3, y1: 12, x2: 21, y2: 12 }), import_react.default.createElement("line", { x1: 3, y1: 6, x2: 21, y2: 6 }), import_react.default.createElement("line", { x1: 3, y1: 18, x2: 21, y2: 18 }))
     ), showMobileMenu && /* @__PURE__ */ import_react.default.createElement("div", { style: {
       position: "absolute",
       top: "100%",
@@ -2793,16 +2798,18 @@
       { icon: null, label: "Sprach-\nbefehl", sublabel: "Mikrofon", svgIcon: "mic", action: function() {
         playTick();
         if (speechSupported) {
+          setChatEntryMode("voice");
           setCurrentView("chat");
           setTimeout(function() {
             startListening();
           }, 300);
         } else {
-          setError("Spracherkennung wird von diesem Browser nicht unterstuetzt.");
+          setError("Spracherkennung wird von diesem Browser nicht unterst\xFCtzt.");
         }
       } },
       { icon: null, label: "Schnelle\nFrage", sublabel: "Chat", svgIcon: "chat", action: function() {
         playTick();
+        setChatEntryMode("type");
         setCurrentView("chat");
       } }
     ].map(function(btn, idx) {
@@ -2975,12 +2982,12 @@
           },
           q
         );
-      }))), isAssistant && !msg.isWelcome && msg.sourceIds && msg.sourceIds.length > 0 && /* @__PURE__ */ import_react.default.createElement("div", { style: { marginTop: "8px", paddingTop: "8px", borderTop: "1px solid " + theme.border, fontSize: "12px", color: theme.primary } }, "\u{1F4DA} Quellen: " + msg.sourceIds.map(function(id) {
+      }))), isAssistant && !msg.isWelcome && msg.sourceIds && msg.sourceIds.length > 0 && /* @__PURE__ */ import_react.default.createElement("div", { style: { marginTop: "8px", paddingTop: "8px", borderTop: "1px solid " + theme.border, fontSize: "12px", color: theme.primary, display: "flex", alignItems: "center", gap: "5px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 } }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" })), "Quellen: " + msg.sourceIds.map(function(id) {
         var c = KNOWLEDGE_BASE.find(function(ch) {
           return ch.id === id;
         });
         return c ? c.title : id;
-      }).join(", ")), isAssistant && !msg.isWelcome && !msg.isTyping && (!msg.sourceIds || msg.sourceIds.length === 0) && /* @__PURE__ */ import_react.default.createElement("div", { style: { marginTop: "8px", paddingTop: "8px", borderTop: "1px solid " + theme.border, fontSize: "11px", color: theme.mutedText } }, "Keine Quellen zugeordnet")))));
+      }).join(", "))))));
     }), isLoading && /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", justifyContent: "flex-start", marginBottom: "12px" } }, /* @__PURE__ */ import_react.default.createElement("div", { style: {
       borderRadius: "18px",
       padding: "12px 16px",
@@ -3027,6 +3034,7 @@
       {
         onClick: function() {
           playTick();
+          setChatEntryMode(null);
           setCurrentView("actions");
         },
         style: {
@@ -3051,7 +3059,7 @@
         }
       },
       /* @__PURE__ */ import_react.default.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M19 12H5" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M12 19l-7-7 7-7" })),
-      "Zurueck"
+      "Zur\xFCck"
     )), /* @__PURE__ */ import_react.default.createElement("div", { ref: inputAreaRef, style: {
       borderTop: "1px solid " + theme.glassBorder,
       padding: isMobile ? "8px 10px" : "12px 16px",
@@ -3071,7 +3079,7 @@
         style: { display: "none" },
         onChange: handleImageSelect
       }
-    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end", position: "relative" }) }, /* @__PURE__ */ import_react.default.createElement(
+    ), /* @__PURE__ */ import_react.default.createElement("div", { style: Object.assign({}, innerMax, { display: "flex", gap: isMobile ? "4px" : "8px", alignItems: "flex-end", position: "relative" }) }, chatEntryMode !== "type" && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3108,7 +3116,7 @@
         }
       },
       "\u{1F4F7}"
-    ), speechSupported && /* @__PURE__ */ import_react.default.createElement(
+    ), chatEntryMode !== "type" && speechSupported && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3146,7 +3154,7 @@
         }
       },
       isListening ? "\u{1F534}" : "\u{1F399}\uFE0F"
-    ), speechSupported && ttsSupported && /* @__PURE__ */ import_react.default.createElement(
+    ), chatEntryMode !== "type" && speechSupported && ttsSupported && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3184,7 +3192,7 @@
         }
       },
       conversationMode ? "\u{1F50A}" : "\u{1F507}"
-    ), isSpeaking && /* @__PURE__ */ import_react.default.createElement(
+    ), chatEntryMode !== "type" && isSpeaking && /* @__PURE__ */ import_react.default.createElement(
       "button",
       {
         onClick: function() {
@@ -3249,7 +3257,7 @@
         },
         onKeyDown: handleKeyDown,
         onFocus: handleInputFocus,
-        placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? isMobile ? "API-Key eingeben..." : "Zuerst API-Key eingeben..." : pendingImage ? isMobile ? "Frage zum Bild..." : "Frage zum Bild (optional)..." : "Stelle deine Frage...",
+        placeholder: apiKeyStatus === "none" || apiKeyStatus === "invalid" ? isMobile ? "API-Key eingeben..." : "Zuerst API-Key eingeben..." : pendingImage ? isMobile ? "Frage zum Bild..." : "Frage zum Bild (optional)..." : "Deine Frage...",
         disabled: apiKeyStatus === "none" || apiKeyStatus === "invalid",
         rows: 1,
         style: Object.assign({}, inputStyle, {
@@ -3288,7 +3296,7 @@
           fontWeight: 600
         }
       },
-      /* @__PURE__ */ import_react.default.createElement("span", null, "\u{1F4CA} Verwendete Quellen" + (lastSources.length > 0 ? " (" + lastSources.length + ")" : "")),
+      /* @__PURE__ */ import_react.default.createElement("span", { style: { display: "flex", alignItems: "center", gap: "6px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("path", { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" })), "Verwendete Quellen" + (lastSources.length > 0 ? " (" + lastSources.length + ")" : "")),
       /* @__PURE__ */ import_react.default.createElement("span", null, sourcePanelOpen ? "\u25BE" : "\u25B8")
     ), sourcePanelOpen && /* @__PURE__ */ import_react.default.createElement("div", { style: { padding: "0 16px 12px" } }, lastSources.length === 0 ? /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText } }, "Keine Quellen zugeordnet") : lastSources.map(function(id) {
       var chunk = KNOWLEDGE_BASE.find(function(c) {
