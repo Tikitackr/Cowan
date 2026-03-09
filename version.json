@@ -1,6 +1,6 @@
 {
-  "version": "5.13.0",
+  "version": "5.14.0",
   "date": "2026-03-09",
-  "message": "iOS TTS Fix: Stille Utterance bei User-Tap unlockt speechSynthesis fuer spaetere API-Antworten. iOS Resume-Workaround: pause/resume-Interval verhindert 15s-Timeout bei laengeren Texten. Alle TTS-relevanten Buttons (Sprachbefehl-Kachel, Voice-Orb, Gespraechs-Modus-Toggle) rufen unlockTts() auf.",
+  "message": "Voice-Upgrade-Card: Dezenter Glassmorphism-Hinweis im Voice-Orb-Screen auf kostenloses Server-TTS-Upgrade. SVG-Speaker-Icon, Link zur Website, Schliessen-Button mit 7-Tage-Cooldown (localStorage). Sichtbar nur ohne Server-Verbindung.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
