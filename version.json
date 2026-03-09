@@ -1,6 +1,6 @@
 {
-  "version": "5.14.0",
+  "version": "5.15.0",
   "date": "2026-03-09",
-  "message": "Voice-Upgrade-Card: Dezenter Glassmorphism-Hinweis im Voice-Orb-Screen auf kostenloses Server-TTS-Upgrade. SVG-Speaker-Icon, Link zur Website, Schliessen-Button mit 7-Tage-Cooldown (localStorage). Sichtbar nur ohne Server-Verbindung.",
+  "message": "API-Key Persistenz: Key wird im localStorage gespeichert und nach Reload automatisch geladen. Voice-Upgrade-Link oeffnet im selben Tab (kein target=_blank), Zurueck-Navigation funktioniert jetzt sauber auf iPhone/PWA.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
