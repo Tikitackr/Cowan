@@ -1,6 +1,6 @@
 {
-  "version": "5.15.0",
-  "date": "2026-03-09",
-  "message": "API-Key Persistenz: Key wird im localStorage gespeichert und nach Reload automatisch geladen. Voice-Upgrade-Link oeffnet im selben Tab (kein target=_blank), Zurueck-Navigation funktioniert jetzt sauber auf iPhone/PWA.",
+  "version": "5.16.0",
+  "date": "2026-03-11",
+  "message": "Phase 4 Sync-Modul: syncWriteEvent + syncReadDashboardState + Polling (10s). Scan/Intent-Events an Sync-Server. Dashboard-Fortschritt wird gelesen. Sync-Status-Indikator. Neue URL-Parameter: sync + synctoken.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
