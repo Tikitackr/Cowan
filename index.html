@@ -1221,17 +1221,7 @@
         var payload = {
           lastUpdate: (/* @__PURE__ */ new Date()).toISOString(),
           device: "iphone",
-          events: syncEventsBufferRef.current.slice(-50),
-          dailySummary: {
-            chaptersRead: companionProgress.completedChapters,
-            questionsAsked: companionLog.filter(function(l) {
-              return l.icon === "\u2753";
-            }).length,
-            errorsReported: companionLog.filter(function(l) {
-              return l.icon === "\u26A0\uFE0F";
-            }).length,
-            currentChapter: companionProgress.currentChapter
-          }
+          events: syncEventsBufferRef.current.slice(-50)
         };
         fetch(companionParams.syncUrl + "/handy-events.json", {
           method: "PUT",
