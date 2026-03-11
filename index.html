@@ -1218,6 +1218,36 @@
       });
       var interval = setInterval(function() {
         syncReadDashboardState();
+        var payload = {
+          lastUpdate: (/* @__PURE__ */ new Date()).toISOString(),
+          device: "iphone",
+          events: syncEventsBufferRef.current.slice(-50),
+          dailySummary: {
+            chaptersRead: companionProgress.completedChapters,
+            questionsAsked: companionLog.filter(function(l) {
+              return l.icon === "\u2753";
+            }).length,
+            errorsReported: companionLog.filter(function(l) {
+              return l.icon === "\u26A0\uFE0F";
+            }).length,
+            currentChapter: companionProgress.currentChapter
+          }
+        };
+        fetch(companionParams.syncUrl + "/handy-events.json", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + companionParams.syncToken },
+          body: JSON.stringify(payload)
+        }).then(function(res) {
+          if (res.ok) {
+            setSyncConnected(true);
+            setSyncError(null);
+          } else {
+            setSyncConnected(false);
+          }
+        }).catch(function() {
+          setSyncConnected(false);
+          setSyncError("Offline");
+        });
       }, 1e4);
       return function() {
         clearInterval(interval);
