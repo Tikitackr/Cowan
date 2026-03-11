@@ -1,6 +1,6 @@
 {
-  "version": "5.17.0",
+  "version": "5.17.1",
   "date": "2026-03-11",
-  "message": "Sync-Fix: Connected-Event beim Start + generisches Chat-Event fuer alle Companion-Nachrichten. Dashboard erkennt Companion sofort.",
+  "message": "Fix Lesefortschritt: Merge lokaler + Dashboard-Kapitel statt Overwrite. Fortschritt bleibt nach Sync erhalten.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
