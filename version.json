@@ -1,6 +1,6 @@
 {
-  "version": "5.16.0",
+  "version": "5.17.0",
   "date": "2026-03-11",
-  "message": "Phase 4 Sync-Modul: syncWriteEvent + syncReadDashboardState + Polling (10s). Scan/Intent-Events an Sync-Server. Dashboard-Fortschritt wird gelesen. Sync-Status-Indikator. Neue URL-Parameter: sync + synctoken.",
+  "message": "Sync-Fix: Connected-Event beim Start + generisches Chat-Event fuer alle Companion-Nachrichten. Dashboard erkennt Companion sofort.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
