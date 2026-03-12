@@ -1,6 +1,6 @@
 {
   "version": "5.20.0",
   "date": "2026-03-12",
-  "message": "iOS Audio Fix: AudioContext statt new Audio() fuer Server-TTS. decodeAudioData umgeht iOS play()-Blockade. Einmal bei User-Tap freigeschaltet, bleibt AudioContext offen.",
+  "message": "iOS Audio Fix: Globaler AudioContext + decodeAudioData + BufferSource.start() umgeht iOS play()-Blockade. Waveform-AudioContext von TTS-AudioContext getrennt (war Root Cause). ConradNeural (maennlich) als Server-Stimme.",
   "url": "https://tikitackr.github.io/Cowan/"
 }

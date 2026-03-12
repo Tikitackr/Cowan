@@ -1609,7 +1609,6 @@
     var tryAudioContext = function(text, onEnd, ttsUrl, token) {
       var ctx = _globalTtsAudioCtx;
       if (!ctx || ctx.state === "closed") {
-        setTtsDebugMsg("Kein AudioContext \u2192 Browser-TTS");
         setIsSpeaking(false);
         stopTtsWave();
         speakBrowser(text, onEnd);
@@ -1632,14 +1631,11 @@
           setIsSpeaking(false);
           stopTtsWave();
           audioSourceRef.current = null;
-          setTtsDebugMsg("Server-TTS fertig (AudioCtx retry)");
           if (onEnd) onEnd();
         };
         source.start(0);
-        setTtsDebugMsg("AUDIOCONTEXT RETRY OK!");
         showWowMoment();
       }).catch(function(e) {
-        setTtsDebugMsg("AudioCtx retry fail \u2192 Browser-TTS");
         setIsSpeaking(false);
         stopTtsWave();
         speakBrowser(text, onEnd);
@@ -1660,13 +1656,7 @@
       }
       setIsSpeaking(true);
       startTtsWave();
-      var dbg = [];
-      var updateDbg = function(msg) {
-        dbg.push(msg);
-        setTtsDebugMsg(dbg.join(" \u2192 "));
-      };
       var ctx = _globalTtsAudioCtx;
-      updateDbg("AC:" + (ctx ? ctx.state : "null"));
       fetch(ttsUrl + "/speak", {
         method: "POST",
         headers: {
@@ -1676,14 +1666,10 @@
         body: JSON.stringify({ text, voice: "de-DE-ConradNeural" })
       }).then(function(res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
-        updateDbg("fetch:OK");
         return res.arrayBuffer();
       }).then(function(arrayBuf) {
-        updateDbg("buf:" + arrayBuf.byteLength + "B");
         ctx = _globalTtsAudioCtx;
-        updateDbg("AC2:" + (ctx ? ctx.state : "null"));
         if (!ctx) {
-          updateDbg("keinAC\u2192Browser");
           setIsSpeaking(false);
           stopTtsWave();
           speakBrowser(text, onEnd);
@@ -1691,10 +1677,8 @@
         }
         var resumeP = ctx.state !== "running" ? ctx.resume() : Promise.resolve();
         return resumeP.then(function() {
-          updateDbg("decode...");
           return ctx.decodeAudioData(arrayBuf);
         }).then(function(audioBuffer) {
-          updateDbg("decoded:" + audioBuffer.duration.toFixed(1) + "s");
           if (_globalTtsSource) {
             try {
               _globalTtsSource.stop();
@@ -1709,15 +1693,12 @@
             setIsSpeaking(false);
             stopTtsWave();
             _globalTtsSource = null;
-            updateDbg("FERTIG!");
             if (onEnd) onEnd();
           };
           source.start(0);
-          updateDbg("SPIELT!");
           showWowMoment();
         });
       }).catch(function(err) {
-        updateDbg("FAIL:" + err.message);
         setIsSpeaking(false);
         stopTtsWave();
         _globalTtsSource = null;
@@ -1765,41 +1746,26 @@
     };
     var ttsUnlockedRef = (0, import_react2.useRef)(false);
     var serverAudioUnlockedRef = (0, import_react2.useRef)(false);
-    var blessedAudioRef = (0, import_react2.useRef)(null);
-    var _ttsDebug = (0, import_react2.useState)("");
-    var ttsDebugMsg = _ttsDebug[0];
-    var setTtsDebugMsg = _ttsDebug[1];
     var unlockServerAudio = function() {
       if (serverAudioUnlockedRef.current) return;
       try {
-        var debugParts = [];
         var AC = window.AudioContext || window.webkitAudioContext;
         if (AC) {
           if (!_globalTtsAudioCtx || _globalTtsAudioCtx.state === "closed") {
             _globalTtsAudioCtx = new AC();
           }
           var ctx = _globalTtsAudioCtx;
-          debugParts.push("AC:" + ctx.state);
           ctx.resume().then(function() {
-            debugParts.push("resumed:" + ctx.state);
             var buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
             var src = ctx.createBufferSource();
             src.buffer = buf;
             src.connect(ctx.destination);
             src.start(0);
-            debugParts.push("silent:OK");
             serverAudioUnlockedRef.current = true;
-            setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
           }).catch(function(e) {
-            debugParts.push("resume-fail:" + e.message);
-            setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
           });
-        } else {
-          debugParts.push("NO-AC");
-          setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
         }
       } catch (e) {
-        setTtsDebugMsg("Unlock ERR: " + e.message);
       }
     };
     var unlockTts = function() {
@@ -3633,19 +3599,7 @@
       border: "1px solid rgba(34,197,94,0.3)",
       animation: "fadeInUp 0.5s ease-out",
       textAlign: "center"
-    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "#22c55e", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" })), /* @__PURE__ */ import_react.default.createElement("span", { style: { fontSize: "15px", fontWeight: 700, color: "#22c55e" } }, "Stimme upgraded!")), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px", lineHeight: 1.4 } }, "Dein Server spricht jetzt fuer Cowan")), ttsDebugMsg && /* @__PURE__ */ import_react.default.createElement("div", { style: {
-      marginTop: "8px",
-      padding: "8px 12px",
-      borderRadius: "8px",
-      maxWidth: "340px",
-      width: "100%",
-      background: "rgba(0,0,0,0.7)",
-      color: "#0f0",
-      fontSize: "11px",
-      fontFamily: "monospace",
-      textAlign: "left",
-      wordBreak: "break-all"
-    } }, "TTS: ", ttsDebugMsg), !voiceUpgradeCardDismissed && !showVoiceUpgradedBanner && !getTtsUrl() && !(companionParams && companionParams.gateway) && /* @__PURE__ */ import_react.default.createElement("div", { style: {
+    } }, /* @__PURE__ */ import_react.default.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" } }, /* @__PURE__ */ import_react.default.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "#22c55e", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ import_react.default.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), /* @__PURE__ */ import_react.default.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" })), /* @__PURE__ */ import_react.default.createElement("span", { style: { fontSize: "15px", fontWeight: 700, color: "#22c55e" } }, "Stimme upgraded!")), /* @__PURE__ */ import_react.default.createElement("div", { style: { fontSize: "12px", color: theme.mutedText, marginTop: "6px", lineHeight: 1.4 } }, "Dein Server spricht jetzt fuer Cowan")), !voiceUpgradeCardDismissed && !showVoiceUpgradedBanner && !getTtsUrl() && !(companionParams && companionParams.gateway) && /* @__PURE__ */ import_react.default.createElement("div", { style: {
       marginTop: "16px",
       padding: "12px 16px",
       borderRadius: "14px",
