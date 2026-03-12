@@ -1,6 +1,6 @@
 {
-  "version": "5.24.0",
+  "version": "5.25.0",
   "date": "2026-03-12",
-  "message": "Voice UX Upgrade: Stille-Erkennung 2s→1.2s, Unterbrechung (User spricht→TTS stoppt), Teilsatz-TTS (Komma statt nur Satzende), Streaming, max_tokens 300/800.",
+  "message": "Voice UX v2: Stille-Timer nur bei finalem Text (800ms statt bei jedem Interim), Auto-Mikrofon 400→100ms, Unterbrechung, Teilsatz-TTS, Streaming.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
