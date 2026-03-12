@@ -1,6 +1,6 @@
 {
-  "version": "5.23.0",
+  "version": "5.24.0",
   "date": "2026-03-12",
-  "message": "STREAMING! API-Antworten kommen jetzt in Echtzeit. Voice-Modus: TTS startet sofort beim ersten Satz statt auf komplette Antwort zu warten. Nur 12 Chunks im Voice-Modus fuer schnellere TTFT.",
+  "message": "Voice UX Upgrade: Stille-Erkennung 2s→1.2s, Unterbrechung (User spricht→TTS stoppt), Teilsatz-TTS (Komma statt nur Satzende), Streaming, max_tokens 300/800.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
