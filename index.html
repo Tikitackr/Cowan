@@ -1658,7 +1658,9 @@
       }
       setIsSpeaking(true);
       startTtsWave();
-      setTtsDebugMsg("Fetch TTS...");
+      var ctx = audioContextRef.current;
+      var ctxState = ctx ? ctx.state : "null";
+      setTtsDebugMsg("Fetch... AC:" + ctxState + " URL:" + ttsUrl.slice(-30));
       fetch(ttsUrl + "/speak", {
         method: "POST",
         headers: {
@@ -1667,88 +1669,58 @@
         },
         body: JSON.stringify({ text, voice: "de-DE-ConradNeural" })
       }).then(function(res) {
-        if (!res.ok) throw new Error("TTS-Server HTTP " + res.status);
-        setTtsDebugMsg("MP3 empfangen, versuche Wiedergabe...");
-        return res.blob();
-      }).then(function(blob) {
-        var blobUrl = URL.createObjectURL(blob);
-        var blessed = blessedAudioRef.current;
-        if (blessed) {
-          setTtsDebugMsg("Strategie 1: blessed Audio");
-          console.log("[TTS] Strategie 1: blessed Audio-Element");
-          blessed.onended = function() {
-            setIsSpeaking(false);
-            stopTtsWave();
-            URL.revokeObjectURL(blobUrl);
-            serverAudioRef.current = null;
-            setTtsDebugMsg("Server-TTS fertig (blessed)");
-            if (onEnd) onEnd();
-          };
-          blessed.onerror = function() {
-            console.warn("[TTS] blessed Audio Fehler, versuche Strategie 2");
-            setTtsDebugMsg("Blessed fehlgeschlagen, Strategie 2...");
-            URL.revokeObjectURL(blobUrl);
-            tryAudioContext(text, onEnd, ttsUrl, token);
-          };
-          serverAudioRef.current = blessed;
-          blessed.src = blobUrl;
-          blessed.volume = 1;
-          blessed.load();
-          blessed.play().then(function() {
-            setTtsDebugMsg("BLESSED PLAY OK!");
-            console.log("[TTS] blessed Audio spielt!");
-            showWowMoment();
-          }).catch(function(e) {
-            console.warn("[TTS] blessed play() fehlgeschlagen:", e.message);
-            setTtsDebugMsg("Blessed play fail: " + e.message + " \u2192 Strategie 2");
-            URL.revokeObjectURL(blobUrl);
-            tryAudioContext(text, onEnd, ttsUrl, token);
-          });
-          return;
-        }
-        setTtsDebugMsg("Kein blessed, Strategie 2: AudioContext");
-        console.log("[TTS] Kein blessed Element, versuche AudioContext");
-        var ctx = audioContextRef.current;
-        if (ctx && ctx.state !== "closed") {
-          var reader = new FileReader();
-          reader.onload = function() {
-            ctx.decodeAudioData(reader.result).then(function(audioBuffer) {
-              if (audioSourceRef.current) {
-                try {
-                  audioSourceRef.current.stop();
-                } catch (e2) {
-                }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        setTtsDebugMsg("MP3 da (" + res.headers.get("content-length") + "B) AC:" + (ctx ? ctx.state : "null"));
+        return res.arrayBuffer();
+      }).then(function(arrayBuf) {
+        setTtsDebugMsg("ArrayBuf:" + arrayBuf.byteLength + "B, decode...");
+        if (ctx && ctx.state === "running") {
+          return ctx.decodeAudioData(arrayBuf).then(function(audioBuffer) {
+            if (audioSourceRef.current) {
+              try {
+                audioSourceRef.current.stop();
+              } catch (e2) {
               }
-              var source = ctx.createBufferSource();
-              source.buffer = audioBuffer;
-              source.connect(ctx.destination);
-              audioSourceRef.current = source;
-              source.onended = function() {
-                setIsSpeaking(false);
-                stopTtsWave();
-                audioSourceRef.current = null;
-                setTtsDebugMsg("Server-TTS fertig (AudioCtx)");
-                if (onEnd) onEnd();
-              };
-              source.start(0);
-              setTtsDebugMsg("AUDIOCONTEXT PLAY OK!");
-              console.log("[TTS] AudioContext spielt!");
-              showWowMoment();
-              URL.revokeObjectURL(blobUrl);
-            }).catch(function(e3) {
-              console.warn("[TTS] decodeAudioData fehlgeschlagen:", e3.message);
-              setTtsDebugMsg("Decode fail: " + e3.message + " \u2192 Browser-TTS");
-              URL.revokeObjectURL(blobUrl);
+            }
+            var source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(ctx.destination);
+            audioSourceRef.current = source;
+            source.onended = function() {
               setIsSpeaking(false);
               stopTtsWave();
-              speakBrowser(text, onEnd);
-            });
-          };
-          reader.readAsArrayBuffer(blob);
-          return;
+              audioSourceRef.current = null;
+              setTtsDebugMsg("SERVER-TTS FERTIG!");
+              if (onEnd) onEnd();
+            };
+            source.start(0);
+            setTtsDebugMsg("SPIELT! AC:" + ctx.state + " dur:" + audioBuffer.duration.toFixed(1) + "s");
+            showWowMoment();
+          });
         }
-        setTtsDebugMsg("Strategie 3: new Audio");
-        console.log("[TTS] Strategie 3: new Audio()");
+        if (ctx && ctx.state === "suspended") {
+          setTtsDebugMsg("AC suspended, resume...");
+          return ctx.resume().then(function() {
+            return ctx.decodeAudioData(arrayBuf);
+          }).then(function(audioBuffer) {
+            var source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(ctx.destination);
+            audioSourceRef.current = source;
+            source.onended = function() {
+              setIsSpeaking(false);
+              stopTtsWave();
+              audioSourceRef.current = null;
+              if (onEnd) onEnd();
+            };
+            source.start(0);
+            setTtsDebugMsg("SPIELT nach resume!");
+            showWowMoment();
+          });
+        }
+        setTtsDebugMsg("Kein AC, new Audio...");
+        var blob = new Blob([arrayBuf], { type: "audio/mpeg" });
+        var blobUrl = URL.createObjectURL(blob);
         var audio = new Audio(blobUrl);
         serverAudioRef.current = audio;
         audio.onended = function() {
@@ -1756,22 +1728,23 @@
           stopTtsWave();
           URL.revokeObjectURL(blobUrl);
           serverAudioRef.current = null;
-          setTtsDebugMsg("Server-TTS fertig (new Audio)");
+          setTtsDebugMsg("Server-TTS fertig (Audio el)");
           if (onEnd) onEnd();
         };
-        audio.onerror = function() {
-          setTtsDebugMsg("new Audio Fehler \u2192 Browser-TTS");
+        audio.onerror = function(evt) {
+          var code = audio.error ? audio.error.code + ":" + audio.error.message : "unknown";
+          setTtsDebugMsg("Audio ERR:" + code + " \u2192 Browser");
           URL.revokeObjectURL(blobUrl);
           setIsSpeaking(false);
           stopTtsWave();
           serverAudioRef.current = null;
           speakBrowser(text, onEnd);
         };
-        audio.play().then(function() {
-          setTtsDebugMsg("NEW AUDIO PLAY OK!");
+        return audio.play().then(function() {
+          setTtsDebugMsg("AUDIO PLAY OK!");
           showWowMoment();
         }).catch(function(e4) {
-          setTtsDebugMsg("new Audio fail: " + e4.message + " \u2192 Browser-TTS");
+          setTtsDebugMsg("play fail:" + e4.message + " \u2192 Browser");
           URL.revokeObjectURL(blobUrl);
           setIsSpeaking(false);
           stopTtsWave();
@@ -1779,8 +1752,7 @@
           speakBrowser(text, onEnd);
         });
       }).catch(function(err) {
-        console.warn("[TTS] Server-TTS nicht erreichbar:", err.message);
-        setTtsDebugMsg("Fetch fail: " + err.message);
+        setTtsDebugMsg("FAIL:" + err.message);
         setIsSpeaking(false);
         stopTtsWave();
         speakBrowser(text, onEnd);
@@ -1827,26 +1799,34 @@
     var unlockServerAudio = function() {
       if (serverAudioUnlockedRef.current) return;
       try {
-        var silentMp3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAgAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAbD/E0MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+M4wAAESoAB0AAACAAAAAA0gAAAAP/jOMQAAADSAAAAA//MYxAABMAKMHUAAAP/jOMQABAgByj1AAABNTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+M4xD4AAADSAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
-        var audio = new Audio(silentMp3);
-        audio.volume = 0.01;
-        audio.play().then(function() {
-          serverAudioUnlockedRef.current = true;
-          blessedAudioRef.current = audio;
-          console.log("[TTS] Audio-Element gesegnet bei User-Tap");
-          setTtsDebugMsg("Audio unlock OK");
-        }).catch(function(e) {
-          console.warn("[TTS] Audio unlock fehlgeschlagen:", e.message);
-          setTtsDebugMsg("Audio unlock FAIL: " + e.message);
-        });
+        var debugParts = [];
         var AC = window.AudioContext || window.webkitAudioContext;
-        if (AC && !audioContextRef.current) {
-          audioContextRef.current = new AC();
-          audioContextRef.current.resume().catch(function() {
+        if (AC) {
+          if (!audioContextRef.current) {
+            audioContextRef.current = new AC();
+          }
+          var ctx = audioContextRef.current;
+          debugParts.push("AC:" + ctx.state);
+          ctx.resume().then(function() {
+            debugParts.push("resumed:" + ctx.state);
+            var buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start(0);
+            debugParts.push("silent:OK");
+            serverAudioUnlockedRef.current = true;
+            setTtsDebugMsg("Unlock: " + debugParts.join("|"));
+          }).catch(function(e) {
+            debugParts.push("resume-fail:" + e.message);
+            setTtsDebugMsg("Unlock: " + debugParts.join("|"));
           });
+        } else {
+          debugParts.push("NO-AC");
+          setTtsDebugMsg("Unlock: " + debugParts.join("|"));
         }
       } catch (e) {
-        setTtsDebugMsg("Unlock error: " + e.message);
+        setTtsDebugMsg("Unlock ERR: " + e.message);
       }
     };
     var unlockTts = function() {
