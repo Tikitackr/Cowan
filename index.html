@@ -1040,6 +1040,7 @@
       )
     );
   }
+  var _globalTtsAudioCtx = null;
   function CowanApp() {
     var _isCompanionInit = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "companion";
     var initialMsg = {
@@ -1605,7 +1606,7 @@
       }
     };
     var tryAudioContext = function(text, onEnd, ttsUrl, token) {
-      var ctx = audioContextRef.current;
+      var ctx = _globalTtsAudioCtx;
       if (!ctx || ctx.state === "closed") {
         setTtsDebugMsg("Kein AudioContext \u2192 Browser-TTS");
         setIsSpeaking(false);
@@ -1663,7 +1664,7 @@
         dbg.push(msg);
         setTtsDebugMsg(dbg.join(" \u2192 "));
       };
-      var ctx = audioContextRef.current;
+      var ctx = _globalTtsAudioCtx;
       updateDbg("AC:" + (ctx ? ctx.state : "null"));
       fetch(ttsUrl + "/speak", {
         method: "POST",
@@ -1679,7 +1680,7 @@
       }).then(function(blob) {
         updateDbg("blob:" + blob.size + "B");
         var blobUrl = URL.createObjectURL(blob);
-        ctx = audioContextRef.current;
+        ctx = _globalTtsAudioCtx;
         updateDbg("AC2:" + (ctx ? ctx.state : "null"));
         if (ctx) {
           var resumeP = ctx.state !== "running" ? ctx.resume() : Promise.resolve();
@@ -1803,10 +1804,10 @@
         var debugParts = [];
         var AC = window.AudioContext || window.webkitAudioContext;
         if (AC) {
-          if (!audioContextRef.current) {
-            audioContextRef.current = new AC();
+          if (!_globalTtsAudioCtx || _globalTtsAudioCtx.state === "closed") {
+            _globalTtsAudioCtx = new AC();
           }
-          var ctx = audioContextRef.current;
+          var ctx = _globalTtsAudioCtx;
           debugParts.push("AC:" + ctx.state);
           ctx.resume().then(function() {
             debugParts.push("resumed:" + ctx.state);
@@ -1817,14 +1818,14 @@
             src.start(0);
             debugParts.push("silent:OK");
             serverAudioUnlockedRef.current = true;
-            setTtsDebugMsg("Unlock: " + debugParts.join("|"));
+            setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
           }).catch(function(e) {
             debugParts.push("resume-fail:" + e.message);
-            setTtsDebugMsg("Unlock: " + debugParts.join("|"));
+            setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
           });
         } else {
           debugParts.push("NO-AC");
-          setTtsDebugMsg("Unlock: " + debugParts.join("|"));
+          setTtsDebugMsg("v5.20.1 Unlock: " + debugParts.join("|"));
         }
       } catch (e) {
         setTtsDebugMsg("Unlock ERR: " + e.message);
