@@ -1658,9 +1658,13 @@
       }
       setIsSpeaking(true);
       startTtsWave();
+      var dbg = [];
+      var updateDbg = function(msg) {
+        dbg.push(msg);
+        setTtsDebugMsg(dbg.join(" \u2192 "));
+      };
       var ctx = audioContextRef.current;
-      var ctxState = ctx ? ctx.state : "null";
-      setTtsDebugMsg("Fetch... AC:" + ctxState + " URL:" + ttsUrl.slice(-30));
+      updateDbg("AC:" + (ctx ? ctx.state : "null"));
       fetch(ttsUrl + "/speak", {
         method: "POST",
         headers: {
@@ -1670,81 +1674,78 @@
         body: JSON.stringify({ text, voice: "de-DE-ConradNeural" })
       }).then(function(res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
-        setTtsDebugMsg("MP3 da (" + res.headers.get("content-length") + "B) AC:" + (ctx ? ctx.state : "null"));
-        return res.arrayBuffer();
-      }).then(function(arrayBuf) {
-        setTtsDebugMsg("ArrayBuf:" + arrayBuf.byteLength + "B, decode...");
-        if (ctx && ctx.state === "running") {
-          return ctx.decodeAudioData(arrayBuf).then(function(audioBuffer) {
-            if (audioSourceRef.current) {
-              try {
-                audioSourceRef.current.stop();
-              } catch (e2) {
-              }
-            }
-            var source = ctx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(ctx.destination);
-            audioSourceRef.current = source;
-            source.onended = function() {
-              setIsSpeaking(false);
-              stopTtsWave();
-              audioSourceRef.current = null;
-              setTtsDebugMsg("SERVER-TTS FERTIG!");
-              if (onEnd) onEnd();
-            };
-            source.start(0);
-            setTtsDebugMsg("SPIELT! AC:" + ctx.state + " dur:" + audioBuffer.duration.toFixed(1) + "s");
-            showWowMoment();
-          });
-        }
-        if (ctx && ctx.state === "suspended") {
-          setTtsDebugMsg("AC suspended, resume...");
-          return ctx.resume().then(function() {
-            return ctx.decodeAudioData(arrayBuf);
-          }).then(function(audioBuffer) {
-            var source = ctx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(ctx.destination);
-            audioSourceRef.current = source;
-            source.onended = function() {
-              setIsSpeaking(false);
-              stopTtsWave();
-              audioSourceRef.current = null;
-              if (onEnd) onEnd();
-            };
-            source.start(0);
-            setTtsDebugMsg("SPIELT nach resume!");
-            showWowMoment();
-          });
-        }
-        setTtsDebugMsg("Kein AC, new Audio...");
-        var blob = new Blob([arrayBuf], { type: "audio/mpeg" });
+        updateDbg("fetch:OK");
+        return res.blob();
+      }).then(function(blob) {
+        updateDbg("blob:" + blob.size + "B");
         var blobUrl = URL.createObjectURL(blob);
-        var audio = new Audio(blobUrl);
-        serverAudioRef.current = audio;
-        audio.onended = function() {
+        ctx = audioContextRef.current;
+        updateDbg("AC2:" + (ctx ? ctx.state : "null"));
+        if (ctx) {
+          var resumeP = ctx.state !== "running" ? ctx.resume() : Promise.resolve();
+          return resumeP.then(function() {
+            updateDbg("AC3:" + ctx.state);
+            var audio = new Audio();
+            audio.crossOrigin = "anonymous";
+            audio.preload = "auto";
+            var mediaSource = ctx.createMediaElementSource(audio);
+            mediaSource.connect(ctx.destination);
+            serverAudioRef.current = audio;
+            audio.onended = function() {
+              setIsSpeaking(false);
+              stopTtsWave();
+              URL.revokeObjectURL(blobUrl);
+              serverAudioRef.current = null;
+              updateDbg("FERTIG!");
+              if (onEnd) onEnd();
+            };
+            audio.onerror = function() {
+              var code = audio.error ? audio.error.code + ":" + (audio.error.message || "") : "?";
+              updateDbg("audioErr:" + code);
+              URL.revokeObjectURL(blobUrl);
+              setIsSpeaking(false);
+              stopTtsWave();
+              serverAudioRef.current = null;
+              speakBrowser(text, onEnd);
+            };
+            audio.src = blobUrl;
+            return audio.play().then(function() {
+              updateDbg("SPIELT!");
+              showWowMoment();
+            }).catch(function(e) {
+              updateDbg("playErr:" + e.message);
+              URL.revokeObjectURL(blobUrl);
+              setIsSpeaking(false);
+              stopTtsWave();
+              serverAudioRef.current = null;
+              speakBrowser(text, onEnd);
+            });
+          });
+        }
+        updateDbg("noAC:newAudio");
+        var audio2 = new Audio(blobUrl);
+        serverAudioRef.current = audio2;
+        audio2.onended = function() {
           setIsSpeaking(false);
           stopTtsWave();
           URL.revokeObjectURL(blobUrl);
           serverAudioRef.current = null;
-          setTtsDebugMsg("Server-TTS fertig (Audio el)");
           if (onEnd) onEnd();
         };
-        audio.onerror = function(evt) {
-          var code = audio.error ? audio.error.code + ":" + audio.error.message : "unknown";
-          setTtsDebugMsg("Audio ERR:" + code + " \u2192 Browser");
+        audio2.onerror = function() {
+          var code = audio2.error ? audio2.error.code : "?";
+          updateDbg("err:" + code);
           URL.revokeObjectURL(blobUrl);
           setIsSpeaking(false);
           stopTtsWave();
           serverAudioRef.current = null;
           speakBrowser(text, onEnd);
         };
-        return audio.play().then(function() {
-          setTtsDebugMsg("AUDIO PLAY OK!");
+        return audio2.play().then(function() {
+          updateDbg("OK!");
           showWowMoment();
-        }).catch(function(e4) {
-          setTtsDebugMsg("play fail:" + e4.message + " \u2192 Browser");
+        }).catch(function(e) {
+          updateDbg("fail:" + e.message);
           URL.revokeObjectURL(blobUrl);
           setIsSpeaking(false);
           stopTtsWave();
@@ -1752,7 +1753,7 @@
           speakBrowser(text, onEnd);
         });
       }).catch(function(err) {
-        setTtsDebugMsg("FAIL:" + err.message);
+        updateDbg("FAIL:" + err.message);
         setIsSpeaking(false);
         stopTtsWave();
         speakBrowser(text, onEnd);
