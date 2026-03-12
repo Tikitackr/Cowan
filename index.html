@@ -1687,7 +1687,24 @@
       ttsUtteranceRef.current = null;
     };
     var ttsUnlockedRef = (0, import_react2.useRef)(false);
+    var serverAudioUnlockedRef = (0, import_react2.useRef)(false);
+    var preloadedAudioRef = (0, import_react2.useRef)(null);
+    var unlockServerAudio = function() {
+      if (serverAudioUnlockedRef.current) return;
+      try {
+        var silentMp3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAgAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAbD/E0MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+M4wAAESoAB0AAACAAAAAA0gAAAAP/jOMQAAADSAAAAA//MYxAABMAKMHUAAAP/jOMQABAgByj1AAABNTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+M4xD4AAADSAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+        var audio = new Audio(silentMp3);
+        audio.volume = 0.01;
+        audio.play().then(function() {
+          serverAudioUnlockedRef.current = true;
+          audio.pause();
+        }).catch(function() {
+        });
+      } catch (e) {
+      }
+    };
     var unlockTts = function() {
+      unlockServerAudio();
       if (!ttsSupported || ttsUnlockedRef.current) return;
       var silent = new SpeechSynthesisUtterance("");
       silent.volume = 0;
