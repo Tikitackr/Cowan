@@ -1,6 +1,6 @@
 {
-  "version": "5.22.0",
+  "version": "5.23.0",
   "date": "2026-03-12",
-  "message": "Dialog radikal gekuerzt: max_tokens 300 (Voice) / 800 (Chat). Prompt verschaerft auf 1-2 Saetze. Quellen-Block im Voice-Modus entfernt.",
+  "message": "STREAMING! API-Antworten kommen jetzt in Echtzeit. Voice-Modus: TTS startet sofort beim ersten Satz statt auf komplette Antwort zu warten. Nur 12 Chunks im Voice-Modus fuer schnellere TTFT.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
