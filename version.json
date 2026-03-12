@@ -1,6 +1,6 @@
 {
-  "version": "5.26.0",
+  "version": "5.27.0",
   "date": "2026-03-12",
-  "message": "Silence-Fix: Timer feuert bei final (800ms) UND interim (1500ms). iOS markiert kurze Saetze oft nie als final – jetzt kein Haengen mehr im Zuhoer-Modus.",
+  "message": "Voice-Flow Fix: sendMessage liest Text aus collectedTranscriptRef (Ref statt State). Behebt Haenger bei zweiter Frage durch React-State-Batching. Silence dual-Timer (800ms final / 1500ms interim).",
   "url": "https://tikitackr.github.io/Cowan/"
 }
