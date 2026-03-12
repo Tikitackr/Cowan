@@ -1,6 +1,6 @@
 {
-  "version": "5.20.0",
+  "version": "5.21.0",
   "date": "2026-03-12",
-  "message": "iOS Audio Fix: Globaler AudioContext + decodeAudioData + BufferSource.start() umgeht iOS play()-Blockade. Waveform-AudioContext von TTS-AudioContext getrennt (war Root Cause). ConradNeural (maennlich) als Server-Stimme.",
+  "message": "Voice-Modus: Eigener System-Prompt fuer Sprachausgabe. Maximal 1-2 Saetze, kein Markdown, keine Listen, Dialog-Stil. TTS-Antworten jetzt gespraechig statt monologisch.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
