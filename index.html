@@ -1617,7 +1617,7 @@
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token
           },
-          body: JSON.stringify({ text })
+          body: JSON.stringify({ text, voice: "de-DE-ConradNeural" })
         });
       }).then(function(res) {
         if (!res.ok) throw new Error("TTS-Server HTTP " + res.status);
