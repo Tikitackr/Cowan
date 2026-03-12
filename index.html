@@ -1041,6 +1041,7 @@
     );
   }
   var _globalTtsAudioCtx = null;
+  var _globalTtsSource = null;
   function CowanApp() {
     var _isCompanionInit = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "companion";
     var initialMsg = {
@@ -1676,87 +1677,50 @@
       }).then(function(res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
         updateDbg("fetch:OK");
-        return res.blob();
-      }).then(function(blob) {
-        updateDbg("blob:" + blob.size + "B");
-        var blobUrl = URL.createObjectURL(blob);
+        return res.arrayBuffer();
+      }).then(function(arrayBuf) {
+        updateDbg("buf:" + arrayBuf.byteLength + "B");
         ctx = _globalTtsAudioCtx;
         updateDbg("AC2:" + (ctx ? ctx.state : "null"));
-        if (ctx) {
-          var resumeP = ctx.state !== "running" ? ctx.resume() : Promise.resolve();
-          return resumeP.then(function() {
-            updateDbg("AC3:" + ctx.state);
-            var audio = new Audio();
-            audio.crossOrigin = "anonymous";
-            audio.preload = "auto";
-            var mediaSource = ctx.createMediaElementSource(audio);
-            mediaSource.connect(ctx.destination);
-            serverAudioRef.current = audio;
-            audio.onended = function() {
-              setIsSpeaking(false);
-              stopTtsWave();
-              URL.revokeObjectURL(blobUrl);
-              serverAudioRef.current = null;
-              updateDbg("FERTIG!");
-              if (onEnd) onEnd();
-            };
-            audio.onerror = function() {
-              var code = audio.error ? audio.error.code + ":" + (audio.error.message || "") : "?";
-              updateDbg("audioErr:" + code);
-              URL.revokeObjectURL(blobUrl);
-              setIsSpeaking(false);
-              stopTtsWave();
-              serverAudioRef.current = null;
-              speakBrowser(text, onEnd);
-            };
-            audio.src = blobUrl;
-            return audio.play().then(function() {
-              updateDbg("SPIELT!");
-              showWowMoment();
-            }).catch(function(e) {
-              updateDbg("playErr:" + e.message);
-              URL.revokeObjectURL(blobUrl);
-              setIsSpeaking(false);
-              stopTtsWave();
-              serverAudioRef.current = null;
-              speakBrowser(text, onEnd);
-            });
-          });
+        if (!ctx) {
+          updateDbg("keinAC\u2192Browser");
+          setIsSpeaking(false);
+          stopTtsWave();
+          speakBrowser(text, onEnd);
+          return;
         }
-        updateDbg("noAC:newAudio");
-        var audio2 = new Audio(blobUrl);
-        serverAudioRef.current = audio2;
-        audio2.onended = function() {
-          setIsSpeaking(false);
-          stopTtsWave();
-          URL.revokeObjectURL(blobUrl);
-          serverAudioRef.current = null;
-          if (onEnd) onEnd();
-        };
-        audio2.onerror = function() {
-          var code = audio2.error ? audio2.error.code : "?";
-          updateDbg("err:" + code);
-          URL.revokeObjectURL(blobUrl);
-          setIsSpeaking(false);
-          stopTtsWave();
-          serverAudioRef.current = null;
-          speakBrowser(text, onEnd);
-        };
-        return audio2.play().then(function() {
-          updateDbg("OK!");
+        var resumeP = ctx.state !== "running" ? ctx.resume() : Promise.resolve();
+        return resumeP.then(function() {
+          updateDbg("decode...");
+          return ctx.decodeAudioData(arrayBuf);
+        }).then(function(audioBuffer) {
+          updateDbg("decoded:" + audioBuffer.duration.toFixed(1) + "s");
+          if (_globalTtsSource) {
+            try {
+              _globalTtsSource.stop();
+            } catch (e2) {
+            }
+          }
+          var source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          _globalTtsSource = source;
+          source.onended = function() {
+            setIsSpeaking(false);
+            stopTtsWave();
+            _globalTtsSource = null;
+            updateDbg("FERTIG!");
+            if (onEnd) onEnd();
+          };
+          source.start(0);
+          updateDbg("SPIELT!");
           showWowMoment();
-        }).catch(function(e) {
-          updateDbg("fail:" + e.message);
-          URL.revokeObjectURL(blobUrl);
-          setIsSpeaking(false);
-          stopTtsWave();
-          serverAudioRef.current = null;
-          speakBrowser(text, onEnd);
         });
       }).catch(function(err) {
         updateDbg("FAIL:" + err.message);
         setIsSpeaking(false);
         stopTtsWave();
+        _globalTtsSource = null;
         speakBrowser(text, onEnd);
       });
     };
@@ -1769,6 +1733,13 @@
       }
     };
     var stopSpeaking = function() {
+      if (_globalTtsSource) {
+        try {
+          _globalTtsSource.stop();
+        } catch (e) {
+        }
+        _globalTtsSource = null;
+      }
       if (audioSourceRef.current) {
         try {
           audioSourceRef.current.stop();
