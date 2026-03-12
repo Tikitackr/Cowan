@@ -1,6 +1,6 @@
 {
-  "version": "5.21.0",
+  "version": "5.22.0",
   "date": "2026-03-12",
-  "message": "Voice-Modus: Eigener System-Prompt fuer Sprachausgabe. Maximal 1-2 Saetze, kein Markdown, keine Listen, Dialog-Stil. TTS-Antworten jetzt gespraechig statt monologisch.",
+  "message": "Dialog radikal gekuerzt: max_tokens 300 (Voice) / 800 (Chat). Prompt verschaerft auf 1-2 Saetze. Quellen-Block im Voice-Modus entfernt.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
