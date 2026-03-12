@@ -1,6 +1,6 @@
 {
-  "version": "5.19.0",
+  "version": "5.20.0",
   "date": "2026-03-12",
-  "message": "Server-TTS: Edge TTS (Microsoft Neural Voices) ueber eigenen VPS. speakServer() mit Fallback auf Browser-TTS. Wow-Moment Banner. Voice-Upgrade-Card versteckt bei TTS-URL.",
+  "message": "iOS Audio Fix: AudioContext statt new Audio() fuer Server-TTS. decodeAudioData umgeht iOS play()-Blockade. Einmal bei User-Tap freigeschaltet, bleibt AudioContext offen.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
