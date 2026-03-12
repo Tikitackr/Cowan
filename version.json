@@ -1,6 +1,6 @@
 {
-  "version": "5.25.0",
+  "version": "5.26.0",
   "date": "2026-03-12",
-  "message": "Voice UX v2: Stille-Timer nur bei finalem Text (800ms statt bei jedem Interim), Auto-Mikrofon 400→100ms, Unterbrechung, Teilsatz-TTS, Streaming.",
+  "message": "Silence-Fix: Timer feuert bei final (800ms) UND interim (1500ms). iOS markiert kurze Saetze oft nie als final – jetzt kein Haengen mehr im Zuhoer-Modus.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
