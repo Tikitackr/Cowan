@@ -1857,7 +1857,7 @@
       return false;
     };
     var WAVEFORM_BARS = 32;
-    var audioContextRef = (0, import_react2.useRef)(null);
+    var waveformAudioCtxRef = (0, import_react2.useRef)(null);
     var analyserRef = (0, import_react2.useRef)(null);
     var audioStreamRef = (0, import_react2.useRef)(null);
     var animFrameRef = (0, import_react2.useRef)(null);
@@ -1905,7 +1905,7 @@
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
         audioStreamRef.current = stream;
         var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioContextRef.current = audioCtx;
+        waveformAudioCtxRef.current = audioCtx;
         var analyser = audioCtx.createAnalyser();
         analyser.fftSize = 128;
         analyserRef.current = analyser;
@@ -1938,10 +1938,10 @@
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(function() {
+      if (waveformAudioCtxRef.current) {
+        waveformAudioCtxRef.current.close().catch(function() {
         });
-        audioContextRef.current = null;
+        waveformAudioCtxRef.current = null;
       }
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach(function(track) {
