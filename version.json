@@ -1,6 +1,6 @@
 {
-  "version": "5.18.0",
+  "version": "5.19.0",
   "date": "2026-03-12",
-  "message": "Kapitel rueckgaengig per Sprache (undo_chapter Intent). Neues Event chapter_undo fuer Sync.",
+  "message": "Server-TTS: Edge TTS (Microsoft Neural Voices) ueber eigenen VPS. speakServer() mit Fallback auf Browser-TTS. Wow-Moment Banner. Voice-Upgrade-Card versteckt bei TTS-URL.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
