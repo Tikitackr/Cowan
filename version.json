@@ -1,6 +1,6 @@
 {
-  "version": "5.17.1",
-  "date": "2026-03-11",
-  "message": "Fix Lesefortschritt: Merge lokaler + Dashboard-Kapitel statt Overwrite. Fortschritt bleibt nach Sync erhalten.",
+  "version": "5.18.0",
+  "date": "2026-03-12",
+  "message": "Kapitel rueckgaengig per Sprache (undo_chapter Intent). Neues Event chapter_undo fuer Sync.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
