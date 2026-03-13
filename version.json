@@ -1,6 +1,6 @@
 {
-  "version": "5.33.0",
+  "version": "5.34.0",
   "date": "2026-03-13",
-  "message": "Realtime Voice: Kapitelfortschritt per Sprache (client-seitige Intent-Erkennung auf User-Transkript). Stimme cedar. Sync zum Dashboard bei 'Kapitel X gelesen/fertig/rueckgaengig'.",
+  "message": "Auto-Reconnect bei WebRTC-Timeout (max 3 Versuche, 2s Pause, Hinweis am Orb). Kapitelfortschritt per Realtime-Sprache + sichtbare Bestaetigung. Stimme cedar. server_vad Anti-Echo.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
