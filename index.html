@@ -1605,9 +1605,6 @@
     };
     var getRealtimeUrl = function() {
       if (isCompanionMode && companionParams.realtimeUrl) return companionParams.realtimeUrl;
-      if (isCompanionMode && companionParams.syncUrl) {
-        return companionParams.syncUrl.replace(/:8443\b/, ":8445");
-      }
       try {
         var stored = localStorage.getItem("cowan_realtime_url");
         if (stored) return stored;
