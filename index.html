@@ -1942,18 +1942,24 @@
             dc.send(JSON.stringify({
               type: "session.update",
               session: {
-                voice: "marin",
+                type: "realtime",
+                model: "gpt-realtime-mini",
+                output_modalities: ["audio", "text"],
                 instructions: "Du bist Cowan, ein freundlicher und kompetenter Buch-Begleiter fuer das OpenClaw-Sachbuch. Du sprichst Deutsch, antwortest in 1-2 kurzen Saetzen, stellst Rueckfragen wenn etwas unklar ist, und hilfst dem Leser beim Verstehen von KI-Agenten, OpenClaw-Setup und Programmierung. Kein Markdown, keine Listen, keine Emojis \u2013 du sprichst natuerlich wie in einem echten Gespraech.",
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.5,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 600
+                audio: {
+                  input: {
+                    turn_detection: {
+                      type: "semantic_vad"
+                    }
+                  },
+                  output: {
+                    voice: "marin"
+                  }
                 },
                 input_audio_transcription: { model: "whisper-1" }
               }
             }));
-            console.log("[Realtime] Session konfiguriert (instructions + VAD + transcription)");
+            console.log("[Realtime] Session konfiguriert (GA API Format: type+model+audio+instructions)");
           } catch (e) {
             console.warn("[Realtime] session.update fehlgeschlagen:", e.message);
           }
