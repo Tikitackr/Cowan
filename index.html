@@ -1151,11 +1151,11 @@
     var setSyncError = _syncError[1];
     var syncEventsBufferRef = (0, import_react2.useRef)([]);
     var lastSyncWriteRef = (0, import_react2.useRef)(null);
-    var syncWriteEvent = function(event) {
+    var syncWriteEvent = function(event, force) {
       if (!isCompanionMode || !companionParams.syncUrl || !companionParams.syncToken) return;
       var eventWithTimestamp = Object.assign({}, event, { timestamp: (/* @__PURE__ */ new Date()).toISOString() });
       syncEventsBufferRef.current = syncEventsBufferRef.current.concat([eventWithTimestamp]);
-      if (lastSyncWriteRef.current && Date.now() - lastSyncWriteRef.current < 2e3) return;
+      if (!force && lastSyncWriteRef.current && Date.now() - lastSyncWriteRef.current < 2e3) return;
       lastSyncWriteRef.current = Date.now();
       var payload = {
         lastUpdate: (/* @__PURE__ */ new Date()).toISOString(),
@@ -2004,16 +2004,17 @@
                 voiceMessagesRef.current.push({ role: "user", content: userText });
                 realtimeUserTranscriptRef.current = userText;
                 if (isCompanionMode) {
-                  var lower = userText.toLowerCase();
-                  var chapterWords = { eins: 1, zwei: 2, drei: 3, vier: 4, fuenf: 5, f\u00FCnf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10, elf: 11, zwoelf: 12, zw\u00F6lf: 12, dreizehn: 13, vierzehn: 14, fuenfzehn: 15, f\u00FCnfzehn: 15 };
-                  var chMatch = lower.match(/kapitel\s+(\d+|eins|zwei|drei|vier|fu?e?nf|fünf|sechs|sieben|acht|neun|zehn|elf|zwo?e?lf|zwölf|dreizehn|vierzehn|fu?e?nfzehn|fünfzehn)/);
+                  var lower = userText.toLowerCase().replace(/ü/g, "ue").replace(/ö/g, "oe").replace(/ä/g, "ae");
+                  var chapterWords = { eins: 1, zwei: 2, drei: 3, vier: 4, fuenf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10, elf: 11, zwoelf: 12, dreizehn: 13, vierzehn: 14, fuenfzehn: 15 };
+                  var chMatch = lower.match(/kapitel\s*(?:nummer\s*)?(\d+|eins|zwei|drei|vier|fuenf|sechs|sieben|acht|neun|zehn|elf|zwoelf|dreizehn|vierzehn|fuenfzehn)/);
                   if (chMatch) {
                     var chNum = parseInt(chMatch[1]) || chapterWords[chMatch[1]] || 0;
                     if (chNum > 0 && chNum <= 15) {
-                      var isUndo = /rueckgaengig|rückgängig|undo|doch nicht|zurueck|zurück|entfernen/.test(lower);
-                      var isDone = /gelesen|fertig|durch|erledigt|geschafft|abgeschlossen|gemacht|abgehakt|komplett|done|finished/.test(lower);
+                      var isUndo = /rueckgaengig|undo|doch nicht|zurueck|entfernen|wegnehmen|loeschen/.test(lower);
+                      var isDone = /gelesen|fertig|durch|erledigt|geschafft|abgeschlossen|gemacht|abgehakt|komplett|done|finished|hab ich|habe ich|bin ich|schaff/.test(lower);
+                      if (!isUndo && !isDone) isDone = true;
                       if (isUndo && chNum > 0) {
-                        console.log("[Realtime] Intent erkannt: Kapitel " + chNum + " rueckgaengig");
+                        console.log("[Realtime] Intent: Kapitel " + chNum + " UNDO");
                         setCompanionProgress(function(prev) {
                           var completed = prev.completedChapters.filter(function(ch) {
                             return ch !== chNum;
@@ -2024,9 +2025,11 @@
                             overallPercent: Math.round(completed.length / prev.totalChapters * 100)
                           });
                         });
-                        syncWriteEvent({ type: "voice_command", command: "chapter_undo", chapter: chNum, transcript: "Kapitel " + chNum + " rueckgaengig (Realtime)" });
+                        setTimeout(function() {
+                          syncWriteEvent({ type: "voice_command", command: "chapter_undo", chapter: chNum, transcript: "Kapitel " + chNum + " rueckgaengig (Realtime)" }, true);
+                        }, 500);
                       } else if (isDone && chNum > 0) {
-                        console.log("[Realtime] Intent erkannt: Kapitel " + chNum + " gelesen");
+                        console.log("[Realtime] Intent: Kapitel " + chNum + " DONE");
                         setCompanionProgress(function(prev) {
                           var completed = prev.completedChapters.slice();
                           if (completed.indexOf(chNum) === -1) {
@@ -2042,9 +2045,11 @@
                           });
                         });
                         setCompanionLog(function(prev) {
-                          return prev.concat([{ icon: "\u2705", text: "Kapitel " + chNum + " gelesen (Sprache)", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
+                          return prev.concat([{ icon: "\u2705", text: "Kapitel " + chNum + " gelesen", timestamp: (/* @__PURE__ */ new Date()).toISOString() }]);
                         });
-                        syncWriteEvent({ type: "voice_command", command: "kapitel_complete", chapter: chNum, transcript: "Kapitel " + chNum + " gelesen (Realtime)" });
+                        setTimeout(function() {
+                          syncWriteEvent({ type: "voice_command", command: "kapitel_complete", chapter: chNum, transcript: "Kapitel " + chNum + " gelesen (Realtime)" }, true);
+                        }, 500);
                       }
                     }
                   }
