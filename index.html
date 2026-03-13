@@ -1054,6 +1054,7 @@
   var _realtimeDc = null;
   var _realtimeAudioEl = null;
   var _realtimeActive = false;
+  var _realtimeWaveInterval = null;
   function CowanApp() {
     var _isCompanionInit = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "companion";
     var initialMsg = {
@@ -1826,6 +1827,17 @@
         _realtimeFallbackToStandard();
         return;
       }
+      try {
+        if (!_globalTtsAudioCtx) {
+          _globalTtsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (_globalTtsAudioCtx.state === "suspended") {
+          _globalTtsAudioCtx.resume();
+        }
+        console.log("[Realtime] AudioContext unlocked:", _globalTtsAudioCtx.state);
+      } catch (e) {
+        console.warn("[Realtime] AudioContext unlock fehlgeschlagen:", e.message);
+      }
       setVoiceOrbState("thinking");
       var healthDone = false;
       var healthTimer = setTimeout(function() {
@@ -1867,12 +1879,7 @@
       setVoiceOrbState("listening");
       var pc = new RTCPeerConnection();
       _realtimePc = pc;
-      var audioEl = document.createElement("audio");
-      audioEl.autoplay = true;
-      audioEl.playsInline = true;
-      audioEl.setAttribute("playsinline", "");
-      audioEl.setAttribute("webkit-playsinline", "");
-      _realtimeAudioEl = audioEl;
+      _realtimeAudioEl = null;
       pc.onconnectionstatechange = function() {
         console.log("[Realtime] Connection State:", pc.connectionState);
         if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
@@ -1885,30 +1892,30 @@
         console.log("[Realtime] ICE State:", pc.iceConnectionState);
       };
       pc.ontrack = function(event) {
-        audioEl.srcObject = event.streams[0];
+        console.log("[Realtime] Remote-Track empfangen \u2013 Audio-Playback starten");
         try {
-          audioEl.play().catch(function(e) {
-            console.warn("[Realtime] Audio play blocked:", e.message);
-          });
+          var ctx = _globalTtsAudioCtx;
+          if (!ctx) {
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            _globalTtsAudioCtx = ctx;
+          }
+          if (ctx.state === "suspended") ctx.resume();
+          var source = ctx.createMediaStreamSource(event.streams[0]);
+          source.connect(ctx.destination);
+          _realtimeAudioEl = source;
+          console.log("[Realtime] AudioContext-Route aktiv, State:", ctx.state);
         } catch (e) {
+          console.error("[Realtime] AudioContext-Route fehlgeschlagen:", e.message);
+          var fallbackAudio = document.createElement("audio");
+          fallbackAudio.autoplay = true;
+          fallbackAudio.playsInline = true;
+          fallbackAudio.srcObject = event.streams[0];
+          try {
+            fallbackAudio.play();
+          } catch (e2) {
+          }
+          _realtimeAudioEl = fallbackAudio;
         }
-        audioEl.onplay = function() {
-          setVoiceOrbState("speaking");
-          if (!audioEl._waveInterval) {
-            audioEl._waveInterval = setInterval(function() {
-              var bars = [];
-              for (var i = 0; i < 8; i++) bars.push(Math.random() * 0.6 + 0.2);
-              setWaveformData(bars);
-            }, 100);
-          }
-        };
-        audioEl.onended = function() {
-          if (audioEl._waveInterval) {
-            clearInterval(audioEl._waveInterval);
-            audioEl._waveInterval = null;
-          }
-          setWaveformData([]);
-        };
       };
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
         pc.addTrack(stream.getTracks()[0]);
@@ -1964,11 +1971,23 @@
             if (msg.type === "response.audio.delta") {
               if (voiceOrbStateRef.current !== "speaking") {
                 setVoiceOrbState("speaking");
+                if (!_realtimeWaveInterval) {
+                  _realtimeWaveInterval = setInterval(function() {
+                    var bars = [];
+                    for (var i = 0; i < 8; i++) bars.push(Math.random() * 0.6 + 0.2);
+                    setWaveformData(bars);
+                  }, 100);
+                }
               }
             }
             if (msg.type === "response.done") {
               setVoiceOrbState("listening");
               setSpeechTranscript("");
+              if (_realtimeWaveInterval) {
+                clearInterval(_realtimeWaveInterval);
+                _realtimeWaveInterval = null;
+              }
+              setWaveformData([]);
             }
             if (msg.type === "input_audio_buffer.speech_started") {
               setVoiceOrbState("listening");
@@ -2052,13 +2071,20 @@
         _realtimePc = null;
       }
       if (_realtimeAudioEl) {
-        _realtimeAudioEl.pause();
-        _realtimeAudioEl.srcObject = null;
-        if (_realtimeAudioEl._waveInterval) {
-          clearInterval(_realtimeAudioEl._waveInterval);
-          _realtimeAudioEl._waveInterval = null;
+        try {
+          if (_realtimeAudioEl.disconnect) {
+            _realtimeAudioEl.disconnect();
+          } else {
+            _realtimeAudioEl.pause();
+            _realtimeAudioEl.srcObject = null;
+          }
+        } catch (e) {
         }
         _realtimeAudioEl = null;
+      }
+      if (_realtimeWaveInterval) {
+        clearInterval(_realtimeWaveInterval);
+        _realtimeWaveInterval = null;
       }
       setWaveformData([]);
       realtimeTranscriptRef.current = "";
