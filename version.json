@@ -1,6 +1,6 @@
 {
-  "version": "5.31.0",
+  "version": "5.32.0",
   "date": "2026-03-13",
-  "message": "Phase 6 Debugging: session.update-Bestaetigung, AudioContext-Safety-Resume in ontrack, toleranterer Disconnect (5s Grace), response.audio.done Timing, Debug-Logs fuer iPhone-Diagnose, Waveform-Stop bei Cancel.",
+  "message": "Anti-Echo v2: Mic-Mute bei response.created (frueher), 800ms Unmute-Delay nach response.done, input_audio_buffer.clear gegen Echo-Trigger, server_vad (threshold 0.7, silence 800ms) statt semantic_vad.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
