@@ -1806,6 +1806,12 @@
     };
     var realtimeTranscriptRef = (0, import_react2.useRef)("");
     var realtimeUserTranscriptRef = (0, import_react2.useRef)("");
+    var _realtimeFallbackToStandard = function() {
+      setVoiceOrbState("listening");
+      setTimeout(function() {
+        startListening();
+      }, 200);
+    };
     var startRealtimeVoice = function() {
       var realtimeUrl = getRealtimeUrl();
       if (!realtimeUrl || _realtimeActive) return;
@@ -1820,25 +1826,42 @@
       }
       if (!syncToken) {
         console.warn("[Realtime] Kein SYNC_TOKEN \u2013 Fallback auf Standard");
-        setVoiceOrbState("listening");
-        setTimeout(function() {
-          startListening();
-        }, 200);
+        _realtimeFallbackToStandard();
         return;
       }
       setVoiceOrbState("thinking");
-      fetch(realtimeUrl + "/health", { signal: AbortSignal.timeout(3e3) }).then(function(res) {
-        if (!res.ok) throw new Error("Health " + res.status);
-        return res.json();
-      }).then(function() {
-        _doStartRealtimeVoice(realtimeUrl, syncToken);
-      }).catch(function(err) {
-        console.warn("[Realtime] Server nicht erreichbar (" + err.message + ") \u2013 Fallback auf Standard");
-        setVoiceOrbState("listening");
-        setTimeout(function() {
-          startListening();
-        }, 200);
-      });
+      var healthDone = false;
+      var healthTimer = setTimeout(function() {
+        if (healthDone) return;
+        healthDone = true;
+        console.warn("[Realtime] Health-Check Timeout \u2013 Fallback auf Standard");
+        _realtimeFallbackToStandard();
+      }, 3e3);
+      try {
+        fetch(realtimeUrl + "/health").then(function(res) {
+          if (healthDone) return;
+          if (!res.ok) throw new Error("Health " + res.status);
+          return res.json();
+        }).then(function() {
+          if (healthDone) return;
+          healthDone = true;
+          clearTimeout(healthTimer);
+          _doStartRealtimeVoice(realtimeUrl, syncToken);
+        }).catch(function(err) {
+          if (healthDone) return;
+          healthDone = true;
+          clearTimeout(healthTimer);
+          console.warn("[Realtime] Server nicht erreichbar (" + err.message + ") \u2013 Fallback auf Standard");
+          _realtimeFallbackToStandard();
+        });
+      } catch (e) {
+        if (!healthDone) {
+          healthDone = true;
+          clearTimeout(healthTimer);
+          console.warn("[Realtime] Fehler beim Health-Check \u2013 Fallback auf Standard");
+          _realtimeFallbackToStandard();
+        }
+      }
     };
     var _doStartRealtimeVoice = function(realtimeUrl, syncToken) {
       realtimeTranscriptRef.current = "";
