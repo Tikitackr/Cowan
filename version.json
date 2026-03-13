@@ -1,6 +1,6 @@
 {
-  "version": "5.30.0",
+  "version": "5.31.0",
   "date": "2026-03-13",
-  "message": "Phase 6: WebRTC Realtime Voice Client (OpenAI Realtime API). Premium-Voice-Modus im Voice-Orb wenn Realtime-Server verfuegbar. SDP-Handshake ueber VPS, Audio direkt via WebRTC. Fallback auf Standard-Pipeline.",
+  "message": "Phase 6 Debugging: session.update-Bestaetigung, AudioContext-Safety-Resume in ontrack, toleranterer Disconnect (5s Grace), response.audio.done Timing, Debug-Logs fuer iPhone-Diagnose, Waveform-Stop bei Cancel.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
