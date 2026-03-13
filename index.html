@@ -1869,9 +1869,29 @@
       _realtimePc = pc;
       var audioEl = document.createElement("audio");
       audioEl.autoplay = true;
+      audioEl.playsInline = true;
+      audioEl.setAttribute("playsinline", "");
+      audioEl.setAttribute("webkit-playsinline", "");
       _realtimeAudioEl = audioEl;
+      pc.onconnectionstatechange = function() {
+        console.log("[Realtime] Connection State:", pc.connectionState);
+        if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+          console.warn("[Realtime] WebRTC-Verbindung verloren (" + pc.connectionState + ")");
+          stopRealtimeVoice();
+          setVoiceOrbState("idle");
+        }
+      };
+      pc.oniceconnectionstatechange = function() {
+        console.log("[Realtime] ICE State:", pc.iceConnectionState);
+      };
       pc.ontrack = function(event) {
         audioEl.srcObject = event.streams[0];
+        try {
+          audioEl.play().catch(function(e) {
+            console.warn("[Realtime] Audio play blocked:", e.message);
+          });
+        } catch (e) {
+        }
         audioEl.onplay = function() {
           setVoiceOrbState("speaking");
           if (!audioEl._waveInterval) {
@@ -1882,7 +1902,7 @@
             }, 100);
           }
         };
-        audioEl.onpause = function() {
+        audioEl.onended = function() {
           if (audioEl._waveInterval) {
             clearInterval(audioEl._waveInterval);
             audioEl._waveInterval = null;
