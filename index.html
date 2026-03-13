@@ -1897,6 +1897,17 @@
         dc.onopen = function() {
           _realtimeActive = true;
           console.log("[Realtime] DataChannel offen \u2013 Verbindung steht");
+          try {
+            dc.send(JSON.stringify({
+              type: "session.update",
+              session: {
+                input_audio_transcription: { model: "whisper-1" }
+              }
+            }));
+            console.log("[Realtime] Transkription aktiviert (whisper-1)");
+          } catch (e) {
+            console.warn("[Realtime] session.update fehlgeschlagen:", e.message);
+          }
         };
         dc.onmessage = function(event) {
           try {
