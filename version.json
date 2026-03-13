@@ -1,6 +1,6 @@
 {
-  "version": "5.27.0",
-  "date": "2026-03-12",
-  "message": "Voice-Flow Fix: sendMessage liest Text aus collectedTranscriptRef (Ref statt State). Behebt Haenger bei zweiter Frage durch React-State-Batching. Silence dual-Timer (800ms final / 1500ms interim).",
+  "version": "5.30.0",
+  "date": "2026-03-13",
+  "message": "Phase 6: WebRTC Realtime Voice Client (OpenAI Realtime API). Premium-Voice-Modus im Voice-Orb wenn Realtime-Server verfuegbar. SDP-Handshake ueber VPS, Audio direkt via WebRTC. Fallback auf Standard-Pipeline.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
