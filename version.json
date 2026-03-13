@@ -1,6 +1,6 @@
 {
-  "version": "5.32.0",
+  "version": "5.33.0",
   "date": "2026-03-13",
-  "message": "Anti-Echo v2: Mic-Mute bei response.created (frueher), 800ms Unmute-Delay nach response.done, input_audio_buffer.clear gegen Echo-Trigger, server_vad (threshold 0.7, silence 800ms) statt semantic_vad.",
+  "message": "Realtime Voice: Kapitelfortschritt per Sprache (client-seitige Intent-Erkennung auf User-Transkript). Stimme cedar. Sync zum Dashboard bei 'Kapitel X gelesen/fertig/rueckgaengig'.",
   "url": "https://tikitackr.github.io/Cowan/"
 }
