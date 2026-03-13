@@ -1931,7 +1931,9 @@
           _realtimeAudioEl = fallbackAudio;
         }
       };
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      }).then(function(stream) {
         pc.addTrack(stream.getTracks()[0]);
         var dc = pc.createDataChannel("oai-events");
         _realtimeDc = dc;
