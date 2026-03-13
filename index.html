@@ -1055,6 +1055,7 @@
   var _realtimeAudioEl = null;
   var _realtimeActive = false;
   var _realtimeWaveInterval = null;
+  var _realtimeMicTrack = null;
   function CowanApp() {
     var _isCompanionInit = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "companion";
     var initialMsg = {
@@ -1934,7 +1935,9 @@
       navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
       }).then(function(stream) {
-        pc.addTrack(stream.getTracks()[0]);
+        var micTrack = stream.getTracks()[0];
+        _realtimeMicTrack = micTrack;
+        pc.addTrack(micTrack);
         var dc = pc.createDataChannel("oai-events");
         _realtimeDc = dc;
         dc.onopen = function() {
@@ -2003,6 +2006,7 @@
             if (msg.type === "response.audio.delta") {
               if (voiceOrbStateRef.current !== "speaking") {
                 setVoiceOrbState("speaking");
+                if (_realtimeMicTrack) _realtimeMicTrack.enabled = false;
                 if (!_realtimeWaveInterval) {
                   _realtimeWaveInterval = setInterval(function() {
                     var bars = [];
@@ -2023,6 +2027,7 @@
             if (msg.type === "response.done") {
               setVoiceOrbState("listening");
               setSpeechTranscript("");
+              if (_realtimeMicTrack) _realtimeMicTrack.enabled = true;
               if (_realtimeWaveInterval) {
                 clearInterval(_realtimeWaveInterval);
                 _realtimeWaveInterval = null;
@@ -2129,6 +2134,7 @@
       setWaveformData([]);
       realtimeTranscriptRef.current = "";
       realtimeUserTranscriptRef.current = "";
+      _realtimeMicTrack = null;
     };
     (0, import_react2.useEffect)(function() {
       if (ttsSupported && window.speechSynthesis.onvoiceschanged !== void 0) {
@@ -3984,6 +3990,7 @@
                 _realtimeWaveInterval = null;
               }
               setWaveformData([]);
+              if (_realtimeMicTrack) _realtimeMicTrack.enabled = true;
               setVoiceOrbState("listening");
             } else {
               stopSpeaking();
